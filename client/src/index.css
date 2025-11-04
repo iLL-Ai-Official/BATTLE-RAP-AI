@@ -1,0 +1,525 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@300;400;500&family=Share+Tech+Mono:wght@400&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* EVIL ROBOT TAKEOVER - Override all default variables */
+  --background: hsl(0 0% 2%) !important;
+  --foreground: hsl(0 100% 35%) !important;
+  --card: hsl(0 0% 6%) !important;
+  --card-foreground: hsl(0 100% 35%) !important;
+  --popover: hsl(0 0% 2%) !important;
+  --popover-foreground: hsl(0 100% 35%) !important;
+  --primary: hsl(0 100% 35%) !important;
+  --primary-foreground: hsl(0 0% 100%) !important;
+  --secondary: hsl(0 0% 18%) !important;
+  --secondary-foreground: hsl(0 100% 35%) !important;
+  --muted: hsl(0 0% 12%) !important;
+  --muted-foreground: hsl(120 100% 25%) !important;
+  --accent: hsl(0 0% 18%) !important;
+  --accent-foreground: hsl(0 100% 35%) !important;
+  --destructive: hsl(0 100% 35%) !important;
+  --destructive-foreground: hsl(0 0% 100%) !important;
+  --border: hsl(0 0% 18%) !important;
+  --input: hsl(0 0% 6%) !important;
+  --ring: hsl(0 100% 35%) !important;
+  --chart-1: hsl(0 100% 35%) !important;
+  --chart-2: hsl(120 100% 25%) !important;
+  --chart-3: hsl(195 100% 35%) !important;
+  --chart-4: hsl(280 100% 35%) !important;
+  --chart-5: hsl(54 100% 40%) !important;
+  --sidebar: hsl(0 0% 6%) !important;
+  --sidebar-foreground: hsl(0 100% 35%) !important;
+  --sidebar-primary: hsl(0 100% 35%) !important;
+  --sidebar-primary-foreground: hsl(0 0% 100%) !important;
+  --sidebar-accent: hsl(0 0% 18%) !important;
+  --sidebar-accent-foreground: hsl(0 100% 35%) !important;
+  --sidebar-border: hsl(0 0% 18%) !important;
+  --sidebar-ring: hsl(0 100% 35%) !important;
+  --font-sans: Inter, sans-serif;
+  --font-serif: Georgia, serif;
+  --font-mono: 'Share Tech Mono', 'Fira Code', monospace;
+  --radius: 0.5rem;
+  
+  /* Evil Robot Takeover Theme */
+  --primary-dark: hsl(0 0% 2%);          /* Abyssal black - void of humanity */
+  --secondary-dark: hsl(0 0% 6%);        /* Machine shadow */
+  --accent-gold: hsl(51 100% 50%);       /* Keep gold as warning systems */
+  --accent-red: hsl(0 100% 45%);         /* Blood red - danger/termination */
+  --accent-blue: hsl(195 100% 50%);      /* Keep blue */
+  --battle-gray: hsl(0 0% 12%);          /* Darker machine steel */
+  
+  /* New evil robot colors */
+  --cyber-red: hsl(0 100% 35%);          /* Deep digital red */
+  --matrix-green: hsl(120 100% 25%);     /* Matrix terminal green */
+  --electric-blue: hsl(195 100% 35%);    /* Electric circuit blue */
+  --warning-orange: hsl(25 100% 45%);    /* System alert orange */
+  --void-black: hsl(0 0% 0%);            /* Pure void */
+  --steel-gray: hsl(0 0% 18%);           /* Cold machine steel */
+  --plasma-purple: hsl(280 100% 35%);    /* Evil energy plasma */
+  --toxic-yellow: hsl(54 100% 40%);      /* Radioactive warning */
+}
+
+.dark {
+  /* FORCE EVIL ROBOT THEME IN DARK MODE */
+  --background: hsl(0 0% 2%) !important;
+  --foreground: hsl(0 100% 35%) !important;
+  --card: hsl(0 0% 6%) !important;
+  --card-foreground: hsl(0 100% 35%) !important;
+  --popover: hsl(0 0% 2%) !important;
+  --popover-foreground: hsl(0 100% 35%) !important;
+  --primary: hsl(0 100% 35%) !important;
+  --primary-foreground: hsl(0 0% 100%) !important;
+  --secondary: hsl(0 0% 18%) !important;
+  --secondary-foreground: hsl(0 100% 35%) !important;
+  --muted: hsl(0 0% 12%) !important;
+  --muted-foreground: hsl(120 100% 25%) !important;
+  --accent: hsl(0 0% 18%) !important;
+  --accent-foreground: hsl(0 100% 35%) !important;
+  --destructive: hsl(0 100% 35%) !important;
+  --destructive-foreground: hsl(0 0% 100%) !important;
+  --border: hsl(0 0% 18%) !important;
+  --input: hsl(0 0% 6%) !important;
+  --ring: hsl(0 100% 35%) !important;
+  --chart-1: hsl(0 100% 35%) !important;
+  --chart-2: hsl(120 100% 25%) !important;
+  --chart-3: hsl(195 100% 35%) !important;
+  --chart-4: hsl(280 100% 35%) !important;
+  --chart-5: hsl(54 100% 40%) !important;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-primary-dark text-white font-sans antialiased;
+    font-family: var(--font-sans) !important;
+    background: linear-gradient(135deg, var(--void-black) 0%, var(--primary-dark) 30%, var(--cyber-red) 70%, var(--steel-gray) 100%) !important;
+    background-attachment: fixed !important;
+    position: relative;
+    min-height: 100vh;
+    color: white !important;
+    /* Mobile scroll fixes - prevent pull-to-refresh and overscroll */
+    overscroll-behavior: none;
+    overscroll-behavior-y: none;
+    overscroll-behavior-x: none;
+    touch-action: pan-x pan-y;
+    -webkit-overflow-scrolling: touch;
+    /* Prevent iOS bounce/elastic scrolling */
+    -webkit-overscroll-behavior: none;
+  }
+  
+  /* Force override any component backgrounds */
+  *,
+  *::before,
+  *::after {
+    border-color: var(--steel-gray) !important;
+  }
+  
+  /* Force all components to use evil theme */
+  div, section, main, header, nav, aside, footer,
+  .bg-white, .bg-gray-50, .bg-gray-100, .bg-slate-50,
+  .bg-slate-100, .bg-slate-200, .bg-slate-300 {
+    background-color: var(--void-black) !important;
+    color: var(--cyber-red) !important;
+  }
+  
+  .text-black, .text-gray-900, .text-slate-900 {
+    color: var(--cyber-red) !important;
+  }
+  
+  html {
+    background: var(--void-black) !important;
+    /* Mobile scroll fixes - prevent pull-to-refresh */
+    overscroll-behavior: none;
+    overscroll-behavior-y: none;
+    touch-action: pan-x pan-y;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Theme Song Volume Slider Custom Styling */
+  .theme-volume-slider {
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .theme-volume-slider::-webkit-slider-track {
+    width: 100%;
+    height: 4px;
+    cursor: pointer;
+    background: #475569;
+    border-radius: 2px;
+    border: none;
+  }
+
+  .theme-volume-slider::-webkit-slider-thumb {
+    border: none;
+    height: 12px;
+    width: 12px;
+    border-radius: 50%;
+    background: #a855f7;
+    cursor: pointer;
+    -webkit-appearance: none;
+    box-shadow: 0 0 4px rgba(168, 85, 247, 0.5);
+  }
+
+  .theme-volume-slider::-webkit-slider-thumb:hover {
+    background: #9333ea;
+    box-shadow: 0 0 8px rgba(168, 85, 247, 0.8);
+  }
+
+  .theme-volume-slider::-moz-range-track {
+    width: 100%;
+    height: 4px;
+    cursor: pointer;
+    background: #475569;
+    border-radius: 2px;
+    border: none;
+  }
+
+  .theme-volume-slider::-moz-range-thumb {
+    border: none;
+    height: 12px;
+    width: 12px;
+    border-radius: 50%;
+    background: #a855f7;
+    cursor: pointer;
+    box-shadow: 0 0 4px rgba(168, 85, 247, 0.5);
+  }
+  
+  /* Global evil robot overlay effects */
+  body::before {
+    content: '';
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: 
+      radial-gradient(circle at 20% 50%, var(--cyber-red) 0%, transparent 20%),
+      radial-gradient(circle at 80% 20%, var(--matrix-green) 0%, transparent 15%),
+      radial-gradient(circle at 40% 90%, var(--electric-blue) 0%, transparent 18%),
+      linear-gradient(45deg, transparent 48%, hsla(0, 100%, 35%, 0.05) 50%, transparent 52%);
+    opacity: 0.8 !important;
+    pointer-events: none;
+    z-index: -1;
+    animation: evilPulse 8s ease-in-out infinite alternate;
+  }
+  
+  /* Scanlines for retro-futuristic terminal feel */
+  body::after {
+    content: '';
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      hsla(120, 100%, 25%, 0.08) 2px,
+      hsla(120, 100%, 25%, 0.08) 4px
+    ) !important;
+    pointer-events: none;
+    z-index: 9999 !important;
+    animation: scanlines 0.1s linear infinite;
+  }
+
+  .font-orbitron {
+    font-family: 'Orbitron', sans-serif;
+  }
+
+  .font-code {
+    font-family: 'Share Tech Mono', var(--font-mono);
+    text-shadow: 0 0 3px var(--matrix-green);
+  }
+}
+
+@layer utilities {
+  .bg-primary-dark {
+    background-color: var(--primary-dark);
+  }
+
+  .bg-secondary-dark {
+    background-color: var(--secondary-dark);
+  }
+
+  .bg-accent-gold {
+    background-color: var(--accent-gold);
+  }
+
+  .bg-accent-red {
+    background-color: var(--accent-red);
+  }
+
+  .bg-accent-blue {
+    background-color: var(--accent-blue);
+  }
+
+  .bg-battle-gray {
+    background-color: var(--battle-gray);
+  }
+
+  .text-accent-gold {
+    color: var(--accent-gold);
+  }
+
+  .text-accent-red {
+    color: var(--cyber-red);
+    text-shadow: 0 0 10px var(--cyber-red);
+    animation: redGlow 2s ease-in-out infinite alternate;
+  }
+
+  .text-accent-blue {
+    color: var(--accent-blue);
+  }
+
+  .border-battle-gray {
+    border-color: var(--battle-gray);
+  }
+
+  .typewriter {
+    animation: typewriter 2s steps(40, end);
+  }
+
+  @keyframes typewriter {
+    from { width: 0; }
+    to { width: 100%; }
+  }
+
+  @keyframes waveform {
+    0%, 100% { transform: scaleY(0.3); }
+    50% { transform: scaleY(1); }
+  }
+
+  .animate-waveform {
+    animation: waveform 0.5s ease-in-out infinite alternate;
+  }
+
+  .animate-pulse-gold {
+    animation: pulse-gold 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes pulse-gold {
+    0%, 100% {
+      opacity: 1;
+      box-shadow: 0 0 0 0 var(--accent-gold);
+    }
+    50% {
+      opacity: 0.8;
+      box-shadow: 0 0 0 10px transparent;
+    }
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--secondary-dark);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--battle-gray);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--cyber-red);
+    box-shadow: 0 0 10px var(--cyber-red);
+  }
+  
+  /* Evil robot takeover animations */
+  @keyframes evilPulse {
+    0% { opacity: 0.4; }
+    50% { opacity: 0.8; }
+    100% { opacity: 0.6; }
+  }
+  
+  @keyframes scanlines {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(4px); }
+  }
+  
+  @keyframes redGlow {
+    0% { 
+      text-shadow: 0 0 5px var(--cyber-red); 
+      color: var(--cyber-red);
+    }
+    100% { 
+      text-shadow: 0 0 20px var(--cyber-red), 0 0 30px var(--cyber-red); 
+      color: hsl(0 100% 50%);
+    }
+  }
+  
+  @keyframes matrixGlow {
+    0% { 
+      text-shadow: 0 0 5px var(--matrix-green); 
+    }
+    100% { 
+      text-shadow: 0 0 15px var(--matrix-green), 0 0 25px var(--matrix-green); 
+    }
+  }
+  
+  @keyframes systemWarning {
+    0%, 100% { 
+      background-color: var(--steel-gray); 
+      box-shadow: 0 0 0 0 var(--cyber-red);
+    }
+    50% { 
+      background-color: var(--cyber-red); 
+      box-shadow: 0 0 0 5px transparent;
+      color: var(--void-black);
+    }
+  }
+  
+  @keyframes digitalFlicker {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+    75% { opacity: 0.9; }
+  }
+  
+  /* Utility classes for evil robot theme */
+  .cyber-red { color: var(--cyber-red); }
+  .matrix-green { color: var(--matrix-green); }
+  .electric-blue { color: var(--electric-blue); }
+  .plasma-purple { color: var(--plasma-purple); }
+  .toxic-yellow { color: var(--toxic-yellow); }
+  
+  .bg-cyber-red { background-color: var(--cyber-red); }
+  .bg-matrix-green { background-color: var(--matrix-green); }
+  .bg-steel-gray { background-color: var(--steel-gray); }
+  .bg-void-black { background-color: var(--void-black); }
+  
+  .glow-red { 
+    text-shadow: 0 0 10px var(--cyber-red); 
+    animation: redGlow 3s ease-in-out infinite alternate;
+  }
+  
+  .glow-matrix { 
+    text-shadow: 0 0 10px var(--matrix-green); 
+    animation: matrixGlow 2s ease-in-out infinite alternate;
+  }
+  
+  .system-warning {
+    animation: systemWarning 1.5s ease-in-out infinite;
+  }
+  
+  .digital-flicker {
+    animation: digitalFlicker 0.15s ease-in-out infinite;
+  }
+  
+  /* Evil robot button effects */
+  .btn-evil {
+    background: linear-gradient(45deg, var(--steel-gray), var(--cyber-red));
+    border: 1px solid var(--cyber-red);
+    text-shadow: 0 0 5px var(--cyber-red);
+    transition: all 0.3s ease;
+  }
+  
+  .btn-evil:hover {
+    background: linear-gradient(45deg, var(--cyber-red), var(--steel-gray));
+    box-shadow: 0 0 20px var(--cyber-red);
+    text-shadow: 0 0 15px var(--cyber-red);
+    transform: translateY(-2px);
+  }
+  
+  /* Mobile scroll prevention utilities */
+  .prevent-overscroll {
+    overscroll-behavior: none;
+    overscroll-behavior-y: none;
+    overscroll-behavior-x: none;
+    touch-action: pan-x pan-y;
+    -webkit-overflow-scrolling: touch;
+    -webkit-overscroll-behavior: none;
+  }
+  
+  .prevent-pull-to-refresh {
+    overscroll-behavior-y: none;
+    touch-action: pan-x pan-y;
+    -webkit-overscroll-behavior: none;
+  }
+  
+  /* Prevent iOS bouncing on specific containers */
+  .no-bounce {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: none;
+    position: relative;
+  }
+  
+  /* Mobile-safe scrollable areas */
+  .mobile-scroll-safe {
+    overscroll-behavior: none;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* Battle Arena Enhancements */
+  .bg-gradient-radial {
+    background: radial-gradient(circle, var(--tw-gradient-stops));
+  }
+  
+  .animate-slow-pulse {
+    animation: slowPulse 4s ease-in-out infinite;
+  }
+  
+  @keyframes slowPulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.7; }
+  }
+  
+  /* Enhanced arena frame effects */
+  .arena-frame {
+    position: relative;
+  }
+  
+  .arena-frame::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(45deg, var(--accent-gold), var(--accent-red), var(--accent-blue), var(--accent-gold));
+    border-radius: inherit;
+    opacity: 0.6;
+    z-index: -1;
+    animation: frameRotate 3s linear infinite;
+  }
+  
+  @keyframes frameRotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  /* Battle glow animations */
+  .battle-glow-red {
+    animation: battleGlowRed 3s ease-in-out infinite alternate;
+  }
+  
+  .battle-glow-blue {
+    animation: battleGlowBlue 3s ease-in-out infinite alternate;
+  }
+  
+  .battle-glow-gold {
+    animation: battleGlowGold 5s ease-in-out infinite alternate;
+  }
+  
+  @keyframes battleGlowRed {
+    0% { opacity: 0.05; transform: scale(0.8); }
+    100% { opacity: 0.15; transform: scale(1.2); }
+  }
+  
+  @keyframes battleGlowBlue {
+    0% { opacity: 0.05; transform: scale(1.2); }
+    100% { opacity: 0.15; transform: scale(0.8); }
+  }
+  
+  @keyframes battleGlowGold {
+    0% { opacity: 0.03; transform: scale(1); }
+    100% { opacity: 0.08; transform: scale(1.1); }
+  }
+}
+/* EVIL ROBOT TAKEOVER THEME - RESISTANCE IS FUTILE */
+/* Version 2.0 - Maximum Oppression Mode */

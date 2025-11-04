@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>Battle Rap AI - Epic Voice-Powered Rap Battles Against AI</title>
+    <meta name="description" content="Face off against AI in epic rap battles with real-time voice scoring and authentic TTS. Master your flow and climb the ranks." />
+    <meta name="keywords" content="rap battle, AI, voice recognition, hip hop, battle rap, freestyle, TTS, real-time, competitive" />
+    <meta name="author" content="Battle Rap AI" />
+    <meta name="robots" content="index, follow" />
+    <meta name="google-site-verification" content="0T6uVxm4d8VZr4AeCibCCKBTShOREcACtuUwGhJep8Q" />
+    <!-- Canonical URL will be set dynamically by the application -->
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Battle Rap AI - Epic Voice-Powered Rap Battles" />
+    <meta property="og:description" content="Face off against advanced AI opponents in epic rap battles with real-time voice recognition and professional scoring." />
+    <meta property="og:image" content="/social-card.png" />
+    <meta property="og:image:width" content="1408" />
+    <meta property="og:image:height" content="768" />
+    <meta property="og:image:alt" content="Epic AI Rap Battle Arena - Challenge AI opponents in voice-powered battles" />
+    <meta property="og:site_name" content="Battle Rap AI" />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:title" content="Battle Rap AI - Epic Voice-Powered Rap Battles" />
+    <meta property="twitter:description" content="Challenge AI opponents in immersive rap battles with voice recognition and professional scoring." />
+    <meta property="twitter:image" content="/social-card.png" />
+    <meta property="twitter:image:alt" content="Epic AI Rap Battle Arena - Challenge AI opponents in voice-powered battles" />
+    
+    <!-- Performance and Security -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="theme-color" content="#FFD700" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- PWA Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192x192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/pwa-512x512.png" />
+    
+    <!-- PWA iOS Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="RapBots" />
+    <!-- Optimized font loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://api.groq.com">
+    <link rel="dns-prefetch" href="https://api.openai.com">
+    <link rel="dns-prefetch" href="https://api.elevenlabs.io">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="/src/main.tsx" as="script" />
+    <link rel="preload" href="/social-card.png" as="image" />
+    
+    <!-- Optimized font loading - only essential fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Oxanium:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <!-- Structured Data for SEO -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Battle Rap AI",
+      "description": "Epic voice-powered rap battles against advanced AI opponents with real-time transcription and professional scoring",
+      "url": "/",
+      "applicationCategory": "GameApplication",
+      "operatingSystem": "Any",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "featureList": [
+        "Real-time voice recognition",
+        "AI opponents with distinct personalities",
+        "Professional battle scoring",
+        "Text-to-speech synthesis",
+        "Tournament system",
+        "Battle history tracking"
+      ]
+    }
+    </script>
+    
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- PWA Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('🎵 RapBots PWA: Service Worker registered successfully');
+            })
+            .catch((error) => {
+              console.log('🎵 RapBots PWA: Service Worker registration failed');
+            });
+        });
+      }
+    </script>
+    
+    <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
+    <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
+  </body>
+</html>
