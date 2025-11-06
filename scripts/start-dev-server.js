@@ -25,7 +25,7 @@ console.log(`  NODE_ENV=${process.env.NODE_ENV}`);
 console.log(`  PORT=${process.env.PORT}`);
 console.log(`  DATABASE_URL=${process.env.DATABASE_URL}`);
 
-const child = spawn('npx', ['tsx', 'server/index.ts'], { stdio: 'inherit', shell: true });
+const child = spawn('npx', ['tsx', 'server/index.ts'], { stdio: 'inherit' });
 
 child.on('exit', (code) => {
   process.exit(code ?? 0);
