@@ -46,16 +46,23 @@ function Router() {
 
   return (
     <Switch>
+      {/* Public routes - accessible to everyone */}
+      <Route path="/tournaments/leaderboard" component={TournamentLeaderboard} />
+      
+      {/* Main routes - conditional based on auth */}
       {!isAuthenticated ? (
-        <Route path="/" component={Landing} />
+        <>
+          <Route path="/" component={Landing} />
+          <Route path="/tournaments" component={Tournaments} />
+        </>
       ) : (
         <>
+          {/* Authenticated routes */}
           <Route path="/" component={Home} />
           <Route path="/subscribe" component={Subscribe} />
           <Route path="/battle" component={BattleArena} />
           <Route path="/battle/:id" component={BattleArena} />
           <Route path="/tournaments" component={Tournaments} />
-          <Route path="/tournaments/leaderboard" component={TournamentLeaderboard} />
           <Route path="/tournaments/history" component={TournamentHistory} />
           <Route path="/tournaments/brackets" component={TournamentBrackets} />
           <Route path="/tournament/:id" component={TournamentDetail} />
@@ -70,9 +77,10 @@ function Router() {
           <Route path="/training" component={TrainingPage} />
           <Route path="/admin" component={AdminPage} />
           <Route path="/admin/wallets" component={AdminWalletPage} />
-          <Route component={NotFound} />
         </>
       )}
+      
+      {/* 404 fallback */}
       <Route component={NotFound} />
     </Switch>
   );
