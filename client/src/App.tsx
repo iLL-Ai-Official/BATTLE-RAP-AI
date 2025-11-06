@@ -78,30 +78,36 @@ function Router() {
   );
 }
 
-function App() {
+function AppContent() {
   const { isAuthenticated, isLoading } = useAuth();
 
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-primary-dark via-secondary-dark to-primary-dark">
+      <Toaster />
+      <SponsoredBanner interval={25000} enabled={true} />
+      <InstallPrompt />
+      {/* Only show audio gate for authenticated users */}
+      {!isLoading && isAuthenticated && (
+        <AudioAutoplayGate 
+          showDetailedInstructions={true}
+          onAudioUnlocked={() => {
+            console.log('🎵 Global audio unlocked - all auto-play features enabled');
+          }}
+        />
+      )}
+      <ErrorBoundary>
+        <Router />
+      </ErrorBoundary>
+    </div>
+  );
+}
+
+function App() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
-          <div className="min-h-screen bg-gradient-to-br from-primary-dark via-secondary-dark to-primary-dark">
-            <Toaster />
-            <SponsoredBanner interval={25000} enabled={true} />
-            <InstallPrompt />
-            {/* Only show audio gate for authenticated users */}
-            {!isLoading && isAuthenticated && (
-              <AudioAutoplayGate 
-                showDetailedInstructions={true}
-                onAudioUnlocked={() => {
-                  console.log('🎵 Global audio unlocked - all auto-play features enabled');
-                }}
-              />
-            )}
-            <ErrorBoundary>
-              <Router />
-            </ErrorBoundary>
-          </div>
+          <AppContent />
         </TooltipProvider>
       </QueryClientProvider>
     </ErrorBoundary>
