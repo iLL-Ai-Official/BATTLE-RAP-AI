@@ -40,10 +40,10 @@ export const battles = pgTable("battles", {
     createdAt: Date;
   }>>().notNull().default([]),
   status: text("status").notNull().default("active"),
-  // Arc Blockchain competitive stakes
-  isStakeBattle: boolean("is_stake_battle").notNull().default(false), // Whether this is a competitive stake battle
-  stakeAmountUSDC: decimal("stake_amount_usdc", { precision: 20, scale: 6 }), // USDC competitive stake amount
-  stakeTxHash: varchar("stake_tx_hash"), // Arc blockchain transaction hash for competitive stake
+  // Arc Blockchain competitive stakes (DB columns keep legacy names for compatibility)
+  isStakeBattle: boolean("is_wager_battle").notNull().default(false), // Whether this is a competitive stake battle
+  stakeAmountUSDC: decimal("wager_amount_usdc", { precision: 20, scale: 6 }), // USDC competitive stake amount
+  stakeTxHash: varchar("wager_tx_hash"), // Arc blockchain transaction hash for competitive stake
   rewardTxHash: varchar("reward_tx_hash"), // Arc blockchain transaction hash for reward payout
   // Multiplayer PvP support
   isMultiplayer: boolean("is_multiplayer").notNull().default(false), // PvP battle vs real player
@@ -457,7 +457,7 @@ export const matchmakingQueue = pgTable("matchmaking_queue", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull(),
   queueType: varchar("queue_type").notNull(), // "casual", "ranked", "stakes", "tournament"
-  stakeAmount: decimal("stake_amount", { precision: 20, scale: 6 }), // For competitive stake matches
+  stakeAmount: decimal("wager_amount", { precision: 20, scale: 6 }), // For competitive stake matches
   skillRating: integer("skill_rating").default(1000), // ELO-style rating for matchmaking
   status: varchar("status").notNull().default("waiting"), // waiting, matched, expired
   matchedWithUserId: varchar("matched_with_user_id"), // Opponent user ID when matched

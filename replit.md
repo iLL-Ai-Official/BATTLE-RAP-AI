@@ -16,7 +16,7 @@ The application is built with a clear separation between frontend and backend se
 
 The architecture supports a 100-level XP progression system, a seasonal Battle Pass, and a cosmetic shop. A rap training program offers structured lessons with practice battles. Platform wallet management includes a rewards pool, company profit wallet, and transaction tracking with balance alerts. The authentication system supports both Replit OAuth and local email/password login with bcrypt hashing.
 
-Recent architectural additions include Circle Arc L1 blockchain integration for USDC-based tournament rewards and wager battling, user Arc wallet creation, and transaction tracking. An AI payment agent allows natural language control for USDC operations. A multiplayer PvP system supports real player battles, random matchmaking with an ELO skill rating system, and multiplayer tournaments with USDC prizes.
+Recent architectural additions include Circle Arc L1 blockchain integration for USDC-based tournament rewards and competitive stake battles, user Arc wallet creation, and transaction tracking. An AI payment agent allows natural language control for USDC operations. A multiplayer PvP system supports real player battles, random matchmaking with an ELO skill rating system, and multiplayer tournaments with USDC prizes.
 
 Technical Implementations:
 - **Backend**: Express.js with TypeScript, PostgreSQL, and a dedicated scoring service.
@@ -25,7 +25,7 @@ Technical Implementations:
 - **Scoring System**: Analyzes rhyme density, flow quality, and creativity.
 - **Audio & Voice**: Instant transcription (500ms), user-managed API keys for OpenAI gpt-4o-mini-tts (2025), Groq PlayAI TTS, ElevenLabs TTS (native speed control, breath patterns, Turbo models, pronunciation dictionaries), intelligent TTS routing with system fallbacks (Bark TTS + Typecast), and ARTalk for speech-driven 3D head animation and lip sync. FFmpeg for audio processing.
 - **User API Management**: Secure storage of personal API keys, preference-based TTS selection, and automatic fallback.
-- **Arc Blockchain Integration**: Circle's Arc L1 blockchain for USDC rewards and wager battling.
+- **Arc Blockchain Integration**: Circle's Arc L1 blockchain for USDC rewards and competitive stake battles.
 - **Monetization**: Replit Auth, PostgreSQL, Stripe for subscriptions, Arc blockchain for USDC rewards.
 - **Security**: Robust input validation, enhanced error handling, content moderation (Llama Guard 4), encrypted API key storage, secure audio file handling, and authenticated Arc wallet operations.
 
@@ -33,7 +33,7 @@ Technical Implementations:
 - **Groq API**: For instant speech-to-text (Whisper), AI rap generation (Llama), and PlayAI TTS models.
 - **OpenAI API**: For gpt-4o-mini-tts (2025) with steerability features.
 - **ElevenLabs API**: Premium TTS with advanced features including native speed control, breath patterns, Turbo models, and pronunciation dictionaries. Also powers all sound effects (crowd reactions, bells, victory sounds).
-- **Circle Arc L1 Blockchain**: For USDC-based tournament rewards and wager battling.
+- **Circle Arc L1 Blockchain**: For USDC-based tournament rewards and competitive stake battles.
 - **Typecast.ai**: For text-to-speech generation (system fallback).
 - **ARTalk**: For advanced speech-driven 3D head animation and lip-sync.
 - **Stripe**: For secure payment processing and subscription management.
@@ -78,3 +78,11 @@ Technical Implementations:
 - **Complete Lesson System**: Users can view lessons, start practice battles, earn XP rewards, and track progress across all categories
 - **Ready for Demo**: All training features fully functional - lesson viewing, practice challenges, XP/currency rewards, and progress tracking
 - **Protected Route**: Training page requires authentication for secure access to personalized progress and lesson completion data
+
+### ⚖️ Legal Compliance: Terminology Update (Skill-Based Gaming)
+- **Renamed "Wagering" to "Competitive Stakes"**: Updated all terminology throughout codebase for legal compliance
+- **What Changed**: All instances of "wager/wagering/bet" → "stake/competitive stake/skill-based challenge"
+- **Why**: Positions the game as **skill-based competitive gaming** (like esports tournaments), not gambling
+- **Files Updated**: Schema config (WAGER_LIMITS → COMPETITIVE_STAKES_LIMITS), AI payment agent (voice commands), server routes, client UI text, database transaction types (wager_deposit → stake_deposit)
+- **User-Facing Impact**: Players now "stake USDC on their skill" in competitive battles, emphasizing the skill-based nature
+- **Legal Classification**: Competitive esports tournament model with skill-based outcomes, not chance-based gambling
