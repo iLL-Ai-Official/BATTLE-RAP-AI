@@ -49,6 +49,14 @@ Technical Implementations:
 - **Consistent UI**: Navigation component now appears across all major pages (Home, Profile, Wallet, Battle Arena, Tournaments, Training)
 - **Mobile-Responsive**: Compact icon-based navigation optimized for all screen sizes
 
+### 🐛 Critical Profile Page Fix
+- **Owner Feature Visibility**: Fixed critical bug where navigating to `/profile` (without userId) incorrectly identified the page as viewing another user's profile
+- **Root Cause**: `isOwnProfile` check only matched when userId param was present, hiding all owner-only features when accessing via direct navigation
+- **Solution**: Changed ownership check to `!params?.userId || params?.userId === currentUser?.id` to default to true for own profile
+- **Restored Features**: Store credit display ($1000 balance), Edit Profile button, Image Upload, and Character Card Generation now visible on `/profile`
+- **Loading Optimization**: Added `authLoading` check to prevent profile fetch before authentication completes
+- **Architect Approved**: Critical fix verified - all owner features now accessible
+
 ### 🐛 Critical Audio Playback Fix  
 - **Duplicate TTS Issue Resolved**: Fixed critical bug where AI voice was playing 5 times simultaneously during battles
 - **Root Cause**: Multiple audio components (SimpleAudioPlayer in BattleAvatar + AudioControls) were both playing the same TTS audio
