@@ -227,20 +227,20 @@ export class ArcBlockchainService {
   }
 
   /**
-   * Process wager battle deposit
-   * User deposits USDC to participate in wager battle
+   * Process competitive stake battle deposit
+   * User deposits USDC to participate in competitive stake battle
    * CRITICAL: Enforces spending limits before transaction
    */
-  async depositWager(
+  async depositStake(
     userId: string,
     userWalletAddress: string,
-    wagerAmount: string,
+    stakeAmount: string,
     battleId: string
   ): Promise<ArcTransferResult> {
-    console.log(`💰 Processing wager deposit: ${wagerAmount} USDC for user ${userId}`);
+    console.log(`💰 Processing competitive stake deposit: ${stakeAmount} USDC for user ${userId}`);
 
     // CRITICAL: Check spending limits BEFORE transaction
-    const limitCheck = await this.checkSpendingLimits(userId, wagerAmount);
+    const limitCheck = await this.checkSpendingLimits(userId, stakeAmount);
     if (!limitCheck.allowed) {
       console.error(`🚫 Spending limit exceeded for user ${userId}: ${limitCheck.reason}`);
       throw new Error(limitCheck.reason || 'Spending limit exceeded');
@@ -250,35 +250,35 @@ export class ArcBlockchainService {
     const result = await this.transferUSDC({
       fromAddress: userWalletAddress,
       toAddress: this.platformWallet,
-      amountUSDC: wagerAmount,
-      memo: `Wager deposit - Battle ID: ${battleId}`,
+      amountUSDC: stakeAmount,
+      memo: `Competitive stake deposit - Battle ID: ${battleId}`,
     });
 
     // CRITICAL: Record spend after successful transaction
     if (result.status === 'confirmed') {
-      await this.recordSpend(userId, wagerAmount);
-      console.log(`✅ Spend recorded for user ${userId}: $${wagerAmount}`);
+      await this.recordSpend(userId, stakeAmount);
+      console.log(`✅ Spend recorded for user ${userId}: $${stakeAmount}`);
     }
 
     return result;
   }
 
   /**
-   * Payout wager battle winnings
-   * Winner receives their wager + opponent's wager (minus platform fee)
+   * Payout competitive stake battle winnings
+   * Winner receives their stake + opponent's stake (minus platform fee)
    */
-  async payoutWagerWinnings(
+  async payoutStakeWinnings(
     winnerWalletAddress: string,
     totalPayout: string,
     battleId: string
   ): Promise<ArcTransferResult> {
-    console.log(`🎯 Paying out wager winnings: ${totalPayout} USDC`);
+    console.log(`🎯 Paying out competitive stake winnings: ${totalPayout} USDC`);
 
     return this.transferUSDC({
       fromAddress: this.platformWallet,
       toAddress: winnerWalletAddress,
       amountUSDC: totalPayout,
-      memo: `Wager battle winnings - Battle ID: ${battleId}`,
+      memo: `Competitive stake battle winnings - Battle ID: ${battleId}`,
     });
   }
 
@@ -339,46 +339,46 @@ export class ArcBlockchainService {
   }
 
   /**
-   * Validate wager amount against platform limits
+   * Validate competitive stake amount against platform limits
    */
-  validateWagerAmount(amount: string): { valid: boolean; error?: string } {
+  validateStakeAmount(amount: string): { valid: boolean; error?: string } {
     const amountNum = parseFloat(amount);
-    const min = parseFloat(MONETIZATION_CONFIG.WAGER_LIMITS.MIN_WAGER_USDC);
-    const max = parseFloat(MONETIZATION_CONFIG.WAGER_LIMITS.MAX_WAGER_USDC);
+    const min = parseFloat(MONETIZATION_CONFIG.COMPETITIVE_STAKES_LIMITS.MIN_STAKE_USDC);
+    const max = parseFloat(MONETIZATION_CONFIG.COMPETITIVE_STAKES_LIMITS.MAX_STAKE_USDC);
 
     if (isNaN(amountNum)) {
-      return { valid: false, error: 'Invalid wager amount' };
+      return { valid: false, error: 'Invalid competitive stake amount' };
     }
 
     if (amountNum < min) {
-      return { valid: false, error: `Minimum wager is $${min} USDC` };
+      return { valid: false, error: `Minimum competitive stake is $${min} USDC` };
     }
 
     if (amountNum > max) {
-      return { valid: false, error: `Maximum wager is $${max} USDC` };
+      return { valid: false, error: `Maximum competitive stake is $${max} USDC` };
     }
 
     return { valid: true };
   }
 
   /**
-   * Calculate platform fee for wager battles
+   * Calculate platform fee for competitive stake battles
    */
-  calculatePlatformFee(wagerAmount: string): string {
-    const amount = parseFloat(wagerAmount);
-    const feePercent = MONETIZATION_CONFIG.WAGER_LIMITS.PLATFORM_FEE_PERCENT;
+  calculatePlatformFee(stakeAmount: string): string {
+    const amount = parseFloat(stakeAmount);
+    const feePercent = MONETIZATION_CONFIG.COMPETITIVE_STAKES_LIMITS.PLATFORM_FEE_PERCENT;
     const fee = (amount * feePercent) / 100;
     return fee.toFixed(6);
   }
 
   /**
-   * Calculate total payout for wager battle winner
-   * Winner gets: their wager + opponent's wager - platform fee
+   * Calculate total payout for competitive stake battle winner
+   * Winner gets: their stake + opponent's stake - platform fee
    */
-  calculateWagerPayout(wagerAmount: string): string {
-    const amount = parseFloat(wagerAmount);
-    const totalPot = amount * 2; // Both players' wagers
-    const platformFee = parseFloat(this.calculatePlatformFee(wagerAmount)) * 2;
+  calculateStakePayout(stakeAmount: string): string {
+    const amount = parseFloat(stakeAmount);
+    const totalPot = amount * 2; // Both players' stakes
+    const platformFee = parseFloat(this.calculatePlatformFee(stakeAmount)) * 2;
     const payout = totalPot - platformFee;
     return payout.toFixed(6);
   }

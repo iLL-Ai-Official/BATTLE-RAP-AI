@@ -2,7 +2,7 @@
  * AI Payment Agent - Natural Language Control for Arc Blockchain
  * 
  * This AI agent understands voice commands to automate financial actions on Arc:
- * - "Bet 5 dollars on this battle" → Creates wager battle
+ * - "Stake 5 dollars on this battle" → Creates competitive stake battle
  * - "Send 10 USDC to the winner" → Processes payment
  * - "Create a tournament with 50 dollar prize" → Sets up prize tournament
  * - "Show my USDC balance" → Queries Arc wallet
@@ -39,9 +39,9 @@ export class AIPaymentAgent {
     console.log(`🎤 Processing voice command from ${userId}: "${command}"`);
 
     try {
-      // Bet/Wager commands
-      if (lowerCommand.includes('bet') || lowerCommand.includes('wager')) {
-        return await this.handleWagerCommand(userId, command);
+      // Stake/Challenge commands
+      if (lowerCommand.includes('stake') || lowerCommand.includes('challenge')) {
+        return await this.handleStakeCommand(userId, command);
       }
 
       // Balance/wallet commands
@@ -73,7 +73,7 @@ export class AIPaymentAgent {
       return {
         success: false,
         action: 'unknown',
-        message: 'I didn\'t understand that command. Try: "bet 5 dollars", "show balance", or "create tournament"',
+        message: 'I didn\'t understand that command. Try: "stake 5 dollars", "show balance", or "create tournament"',
         error: 'Unknown command'
       };
     } catch (error) {
@@ -88,28 +88,28 @@ export class AIPaymentAgent {
   }
 
   /**
-   * Handle wager/bet commands
-   * Examples: "bet 5 dollars", "wager 10 USDC on this battle"
+   * Handle stake/challenge commands
+   * Examples: "stake 5 dollars", "challenge 10 USDC on this battle"
    */
-  private async handleWagerCommand(userId: string, command: string): Promise<VoiceCommandResult> {
+  private async handleStakeCommand(userId: string, command: string): Promise<VoiceCommandResult> {
     // Extract amount from command
     const amount = this.extractAmount(command);
     if (!amount) {
       return {
         success: false,
-        action: 'wager',
-        message: 'Please specify an amount, like "bet 5 dollars" or "wager 10 USDC"',
+        action: 'stake',
+        message: 'Please specify an amount, like "stake 5 dollars" or "invest in your skill with 10 USDC"',
         error: 'No amount specified'
       };
     }
 
-    // Validate wager amount
-    const validation = this.arcService.validateWagerAmount(amount);
+    // Validate stake amount
+    const validation = this.arcService.validateStakeAmount(amount);
     if (!validation.valid) {
       return {
         success: false,
-        action: 'wager',
-        message: validation.error || 'Invalid wager amount',
+        action: 'stake',
+        message: validation.error || 'Invalid stake amount',
         error: validation.error
       };
     }
@@ -119,62 +119,62 @@ export class AIPaymentAgent {
     if (!walletAddress) {
       return {
         success: false,
-        action: 'wager',
+        action: 'stake',
         message: 'You need an Arc wallet first. Say "create wallet" to get started!',
         error: 'No wallet found'
       };
     }
 
     try {
-      // Create wager battle in storage
-      const wagerBattle = await storage.createWagerBattle(userId, amount);
+      // Create competitive stake battle in storage
+      const stakeBattle = await storage.createStakeBattle(userId, amount);
       
-      // Execute actual blockchain transaction - deposit wager to platform
-      const depositTx = await this.arcService.depositWager(
+      // Execute actual blockchain transaction - deposit stake to platform
+      const depositTx = await this.arcService.depositStake(
         walletAddress,
         amount,
-        wagerBattle.id
+        stakeBattle.id
       );
 
       // Record the transaction
       await storage.recordArcTransaction({
         userId,
         txHash: depositTx.txHash,
-        txType: 'wager_deposit',
+        txType: 'stake_deposit',
         amount,
         fromAddress: walletAddress,
         toAddress: 'platform',
         status: depositTx.status,
         blockNumber: depositTx.blockNumber,
         gasUsedUSDC: depositTx.gasUsedUSDC,
-        memo: `Wager deposit for battle ${wagerBattle.id}`
+        memo: `Competitive stake deposit for battle ${stakeBattle.id}`
       });
 
       // Update battle with transaction hash
-      await storage.updateBattleState(wagerBattle.id, {
-        wagerTxHash: depositTx.txHash
+      await storage.updateBattleState(stakeBattle.id, {
+        stakeTxHash: depositTx.txHash
       });
 
-      console.log(`💰 Wager battle created! Battle ID: ${wagerBattle.id}, Tx: ${depositTx.txHash}`);
+      console.log(`💰 Competitive stake battle created! Battle ID: ${stakeBattle.id}, Tx: ${depositTx.txHash}`);
 
       return {
         success: true,
-        action: 'wager',
-        message: `Wager battle created! You bet $${amount} USDC. Transaction confirmed on Arc blockchain!`,
+        action: 'stake',
+        message: `Competitive stake battle created! You invested $${amount} USDC in your skill. Transaction confirmed on Arc blockchain!`,
         txHash: depositTx.txHash,
         data: { 
-          wagerAmount: amount,
-          battleId: wagerBattle.id,
+          stakeAmount: amount,
+          battleId: stakeBattle.id,
           txHash: depositTx.txHash,
           gasUsed: depositTx.gasUsedUSDC
         }
       };
     } catch (error) {
-      console.error('Error creating wager battle:', error);
+      console.error('Error creating competitive stake battle:', error);
       return {
         success: false,
-        action: 'wager',
-        message: 'Failed to create wager battle. Please try again.',
+        action: 'stake',
+        message: 'Failed to create competitive stake battle. Please try again.',
         error: error instanceof Error ? error.message : 'Unknown error'
       };
     }

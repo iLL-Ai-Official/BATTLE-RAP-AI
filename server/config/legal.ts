@@ -1,11 +1,11 @@
 /**
  * Legal Compliance Configuration
  * 
- * Jurisdiction restrictions and age requirements for wager battles
+ * Jurisdiction restrictions and age requirements for competitive stake battles
  */
 
 /**
- * Restricted jurisdictions for wager battles
+ * Restricted jurisdictions for competitive stake battles
  * Users in these states/countries cannot participate in money-involved features
  */
 export const RESTRICTED_JURISDICTIONS = [
@@ -78,7 +78,7 @@ export function getAgeRequirement(jurisdiction?: string | null): number {
 }
 
 /**
- * Check if a jurisdiction is restricted for wager battles
+ * Check if a jurisdiction is restricted for competitive stake battles
  */
 export function isJurisdictionRestricted(jurisdiction?: string | null): boolean {
   if (!jurisdiction) {

@@ -3489,8 +3489,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create wager battle (with legal compliance checks)
-  app.post('/api/arc/wager-battle', 
+  // Create competitive stake battle (with legal compliance checks)
+  app.post('/api/arc/stake-battle', 
     isAuthenticated,
     requireAgeVerification,
     requireToSAcceptance,
@@ -3498,10 +3498,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { wagerAmount, difficulty, opponentId } = req.body;
+      const { stakeAmount, difficulty, opponentId } = req.body;
       
-      // Validate wager amount
-      const validation = arcBlockchainService.validateWagerAmount(wagerAmount);
+      // Validate competitive stake amount
+      const validation = arcBlockchainService.validateStakeAmount(stakeAmount);
       if (!validation.valid) {
         return res.status(400).json({ message: validation.error });
       }
@@ -3512,11 +3512,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'No Arc wallet found. Create a wallet first.' });
       }
       
-      // Process wager deposit (with spending limit enforcement)
-      const depositTx = await arcBlockchainService.depositWager(
+      // Process competitive stake deposit (with spending limit enforcement)
+      const depositTx = await arcBlockchainService.depositStake(
         userId,
         walletAddress,
-        wagerAmount,
+        stakeAmount,
         'temp_battle_id'
       );
       
@@ -3524,42 +3524,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.recordArcTransaction({
         userId,
         txHash: depositTx.txHash,
-        txType: 'wager_deposit',
-        amount: wagerAmount,
+        txType: 'stake_deposit',
+        amount: stakeAmount,
         fromAddress: walletAddress,
         toAddress: depositTx.txHash, // Platform wallet
         status: depositTx.status,
         blockNumber: depositTx.blockNumber,
         gasUsedUSDC: depositTx.gasUsedUSDC,
-        memo: 'Wager battle deposit'
+        memo: 'Competitive stake deposit'
       });
       
-      // Create wager battle
+      // Create competitive stake battle
       const battle = await storage.createBattle({
         userId,
         difficulty: difficulty || 'normal',
-        isWagerBattle: true,
-        wagerAmountUSDC: wagerAmount,
-        wagerTxHash: depositTx.txHash,
+        isStakeBattle: true,
+        stakeAmountUSDC: stakeAmount,
+        stakeTxHash: depositTx.txHash,
         aiCharacterId: opponentId || 'shadow',
         status: 'active'
       });
       
       res.json({
         battleId: battle.id,
-        wagerAmount,
+        stakeAmount,
         depositTxHash: depositTx.txHash,
-        potentialPayout: arcBlockchainService.calculateWagerPayout(wagerAmount),
-        message: 'Wager battle created! Win to claim the prize pool.'
+        potentialPayout: arcBlockchainService.calculateStakePayout(stakeAmount),
+        message: 'Competitive stake battle created! Win to claim the prize pool.'
       });
     } catch (error) {
-      console.error('Error creating wager battle:', error);
-      res.status(500).json({ message: 'Failed to create wager battle' });
+      console.error('Error creating competitive stake battle:', error);
+      res.status(500).json({ message: 'Failed to create competitive stake battle' });
     }
   });
 
-  // Complete wager battle and payout winner
-  app.post('/api/arc/wager-battle/:battleId/complete', isAuthenticated, async (req: any, res) => {
+  // Complete competitive stake battle and payout winner
+  app.post('/api/arc/stake-battle/:battleId/complete', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const { battleId } = req.params;
@@ -3573,8 +3573,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Not your battle' });
       }
       
-      if (!battle.isWagerBattle || !battle.wagerAmountUSDC) {
-        return res.status(400).json({ message: 'Not a wager battle' });
+      if (!battle.isStakeBattle || !battle.stakeAmountUSDC) {
+        return res.status(400).json({ message: 'Not a competitive stake battle' });
       }
       
       // Determine winner
@@ -3587,10 +3587,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Calculate payout
-        const payout = arcBlockchainService.calculateWagerPayout(battle.wagerAmountUSDC);
+        const payout = arcBlockchainService.calculateStakePayout(battle.stakeAmountUSDC);
         
         // Process payout
-        const payoutTx = await arcBlockchainService.payoutWagerWinnings(
+        const payoutTx = await arcBlockchainService.payoutStakeWinnings(
           walletAddress,
           payout,
           battleId
@@ -3600,7 +3600,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.recordArcTransaction({
           userId,
           txHash: payoutTx.txHash,
-          txType: 'wager_payout',
+          txType: 'stake_payout',
           amount: payout,
           fromAddress: payoutTx.txHash, // Platform wallet
           toAddress: walletAddress,
@@ -3608,7 +3608,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           blockNumber: payoutTx.blockNumber,
           gasUsedUSDC: payoutTx.gasUsedUSDC,
           relatedBattleId: battleId,
-          memo: 'Wager battle winnings'
+          memo: 'Competitive stake battle winnings'
         });
         
         // Update battle with reward transaction
@@ -3631,12 +3631,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         res.json({
           won: false,
-          message: 'Better luck next time! Your wager was lost.'
+          message: 'Better luck next time! Your competitive stake was lost.'
         });
       }
     } catch (error) {
-      console.error('Error completing wager battle:', error);
-      res.status(500).json({ message: 'Failed to complete wager battle' });
+      console.error('Error completing competitive stake battle:', error);
+      res.status(500).json({ message: 'Failed to complete competitive stake battle' });
     }
   });
 

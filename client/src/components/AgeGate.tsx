@@ -50,7 +50,7 @@ export function AgeGate({
       if (data.verified) {
         toast({
           title: "Age Verified",
-          description: "You can now participate in wager battles",
+          description: "You can now participate in competitive stake battles",
         });
         queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
         queryClient.invalidateQueries({ queryKey: ["/api/user/safety-settings"] });
@@ -157,7 +157,7 @@ export function AgeGate({
             <DialogTitle className="text-xl">🔞 Age Verification Required</DialogTitle>
           </div>
           <DialogDescription className="text-base">
-            To participate in wager battles, you must be <strong>{requiredAge}+</strong> years old
+            To participate in competitive stake battles, you must be <strong>{requiredAge}+</strong> years old
             {requiredAge > 18 && " (21+ in some regions)"}.
           </DialogDescription>
         </DialogHeader>
@@ -243,7 +243,7 @@ export function AgeGate({
                 data-testid="checkbox-understand-money"
               />
               <Label htmlFor="understand-money" className="text-sm cursor-pointer leading-tight">
-                I understand wager battles involve <strong>real money</strong>
+                I understand competitive stake battles involve <strong>real money</strong>
               </Label>
             </div>
           </div>

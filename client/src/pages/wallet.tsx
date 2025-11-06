@@ -12,7 +12,7 @@ export default function WalletPage() {
               ⛓️ Arc USDC Wallet
             </h1>
             <p className="text-gray-400">
-              Your Circle Arc L1 blockchain wallet for tournament prizes and wager battles
+              Your Circle Arc L1 blockchain wallet for tournament prizes and competitive stake battles
             </p>
           </div>
           <WalletDashboard />

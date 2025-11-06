@@ -72,7 +72,7 @@ export function WalletDashboard() {
   };
 
   const getTypeIcon = (type: string) => {
-    if (type.includes("deposit") || type.includes("wager")) {
+    if (type.includes("deposit") || type.includes("stake")) {
       return <ArrowDownRight className="w-4 h-4 text-red-500" data-testid="icon-outgoing" />;
     }
     return <ArrowUpRight className="w-4 h-4 text-green-500" data-testid="icon-incoming" />;

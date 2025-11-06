@@ -121,7 +121,7 @@ export interface IStorage {
   getArcTransaction(txHash: string): Promise<ArcTransaction | undefined>;
   getUserArcTransactions(userId: string, limit?: number): Promise<ArcTransaction[]>;
   updateArcTransactionStatus(txHash: string, status: 'pending' | 'confirmed' | 'failed', confirmedAt?: Date): Promise<ArcTransaction>;
-  createWagerBattle(userId: string, wagerAmountUSDC: string): Promise<Battle>;
+  createStakeBattle(userId: string, stakeAmountUSDC: string): Promise<Battle>;
 
   // Safety and Legal Compliance operations
   verifyUserAge(userId: string, birthDate: Date): Promise<User>;
@@ -1016,7 +1016,7 @@ export class DatabaseStorage implements IStorage {
     return tx;
   }
 
-  async createWagerBattle(userId: string, wagerAmountUSDC: string): Promise<Battle> {
+  async createStakeBattle(userId: string, stakeAmountUSDC: string): Promise<Battle> {
     return withRetry(
       async () => {
         const user = await this.getUser(userId);
@@ -1024,11 +1024,11 @@ export class DatabaseStorage implements IStorage {
           throw new Error("User not found");
         }
 
-        // Get random AI character for the wager battle
+        // Get random AI character for the competitive stake battle
         const { getRandomCharacter } = await import("@shared/characters");
         const aiCharacter = getRandomCharacter();
 
-        // Create wager battle with Arc blockchain integration
+        // Create competitive stake battle with Arc blockchain integration
         const battleData = {
           userId,
           userScore: 0,
@@ -1040,8 +1040,8 @@ export class DatabaseStorage implements IStorage {
           aiVoiceId: aiCharacter.voiceId,
           rounds: [],
           status: 'active' as const,
-          isWagerBattle: true,
-          wagerAmountUSDC,
+          isStakeBattle: true,
+          stakeAmountUSDC,
           isMultiplayer: false,
         };
 
@@ -1050,11 +1050,11 @@ export class DatabaseStorage implements IStorage {
           .values(battleData)
           .returning();
 
-        console.log(`💰 Created wager battle: ${battle.id} for $${wagerAmountUSDC} USDC`);
+        console.log(`💰 Created competitive stake battle: ${battle.id} for $${stakeAmountUSDC} USDC`);
         return battle;
       },
       { maxAttempts: 3 },
-      `createWagerBattle for user ${userId}`
+      `createStakeBattle for user ${userId}`
     );
   }
 

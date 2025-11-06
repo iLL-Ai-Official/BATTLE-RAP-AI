@@ -16,7 +16,7 @@ interface SpendingConfirmDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   amount: string;
-  type: "wager_battle" | "tournament_entry" | "other";
+  type: "stake_battle" | "tournament_entry" | "other";
   fee?: string;
   onConfirm: () => void;
   onCancel?: () => void;
@@ -35,8 +35,8 @@ export function SpendingConfirmDialog({
 
   const getTypeLabel = (txType: string) => {
     switch (txType) {
-      case "wager_battle":
-        return "Wager Battle";
+      case "stake_battle":
+        return "Competitive Stake Battle";
       case "tournament_entry":
         return "Tournament Entry";
       default:

@@ -131,14 +131,14 @@ export default function SafetyCenter() {
               )}
             </CardTitle>
             <CardDescription>
-              Required to participate in wager battles with real money
+              Required to participate in competitive stake battles with real money
             </CardDescription>
           </CardHeader>
           <CardContent>
             {settings?.ageVerificationStatus === "verified" ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>You are verified to participate in wager battles</span>
+                <span>You are verified to participate in competitive stake battles</span>
               </div>
             ) : (
               <div className="space-y-3">

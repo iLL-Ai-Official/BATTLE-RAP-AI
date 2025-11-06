@@ -2,7 +2,7 @@
  * Legal Compliance Middleware
  * 
  * Middleware functions to enforce age verification, ToS acceptance,
- * and jurisdiction restrictions for wager battles and prize tournaments
+ * and jurisdiction restrictions for competitive stake battles and prize tournaments
  */
 
 import { Request, Response, NextFunction } from 'express';
@@ -15,7 +15,7 @@ import {
 } from '../config/legal';
 
 /**
- * Require age verification for wager battles
+ * Require age verification for competitive stake battles
  * Blocks unverified users and minors
  */
 export async function requireAgeVerification(
@@ -44,7 +44,7 @@ export async function requireAgeVerification(
     // Check if user is flagged as a minor
     if (user.isMinor) {
       return res.status(403).json({
-        error: 'Users under 18 cannot participate in wager battles',
+        error: 'Users under 18 cannot participate in competitive stake battles',
         code: 'MINOR_BLOCKED',
         ageRequired: getAgeRequirement(user.preferredJurisdiction)
       });
@@ -53,7 +53,7 @@ export async function requireAgeVerification(
     // Check age verification status
     if (user.ageVerificationStatus !== 'verified') {
       return res.status(403).json({
-        error: 'Age verification required to participate in wager battles',
+        error: 'Age verification required to participate in competitive stake battles',
         code: 'AGE_VERIFICATION_REQUIRED',
         status: user.ageVerificationStatus || 'unverified',
         ageRequired: getAgeRequirement(user.preferredJurisdiction)
@@ -68,7 +68,7 @@ export async function requireAgeVerification(
         await storage.updateUser(userId, { isMinor: true });
         
         return res.status(403).json({
-          error: 'You must be of legal age to participate in wager battles',
+          error: 'You must be of legal age to participate in competitive stake battles',
           code: 'UNDERAGE',
           ageRequired: getAgeRequirement(user.preferredJurisdiction)
         });
@@ -164,7 +164,7 @@ export async function checkJurisdiction(
     // Check if user's jurisdiction is restricted
     if (isJurisdictionRestricted(user.preferredJurisdiction)) {
       return res.status(403).json({
-        error: 'Wager battles are not available in your jurisdiction',
+        error: 'Competitive stake battles are not available in your jurisdiction',
         code: 'JURISDICTION_RESTRICTED',
         jurisdiction: user.preferredJurisdiction
       });
@@ -184,7 +184,7 @@ export async function checkJurisdiction(
 /**
  * Combined legal compliance middleware
  * Checks age, ToS, and jurisdiction in one middleware
- * Use this for wager/prize endpoints to reduce overhead
+ * Use this for competitive stake/prize endpoints to reduce overhead
  */
 export async function requireLegalCompliance(
   req: Request & { user?: any }, 
