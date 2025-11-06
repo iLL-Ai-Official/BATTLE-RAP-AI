@@ -480,6 +480,165 @@ export const insertMatchmakingQueueSchema = createInsertSchema(matchmakingQueue)
 export type InsertMatchmakingQueue = z.infer<typeof insertMatchmakingQueueSchema>;
 export type MatchmakingQueueEntry = typeof matchmakingQueue.$inferSelect;
 
+// User progression system
+export const userProgress = pgTable("user_progress", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull().unique(),
+  level: integer("level").notNull().default(1),
+  currentXP: integer("current_xp").notNull().default(0),
+  totalXP: integer("total_xp").notNull().default(0),
+  winStreak: integer("win_streak").notNull().default(0),
+  bestWinStreak: integer("best_win_streak").notNull().default(0),
+  totalBattlesPlayed: integer("total_battles_played").notNull().default(0),
+  totalBattlesWon: integer("total_battles_won").notNull().default(0),
+  totalTournamentsWon: integer("total_tournaments_won").notNull().default(0),
+  prestige: integer("prestige").notNull().default(0),
+  title: varchar("title"),
+  equippedBadge: varchar("equipped_badge"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  index("idx_user_progress_user_id").on(table.userId),
+  index("idx_user_progress_level").on(table.level),
+]);
+
+// Cosmetic items catalog
+export const cosmeticItems = pgTable("cosmetic_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  type: varchar("type").notNull(), // skin, emote, mic_effect, victory_animation, title, badge, stage_background
+  rarity: varchar("rarity").notNull().default("common"), // common, rare, epic, legendary
+  imageUrl: varchar("image_url"),
+  unlockLevel: integer("unlock_level"), // Level required to unlock (null if purchasable only)
+  price: decimal("price", { precision: 10, scale: 2 }), // Price in virtual currency (null if level-locked only)
+  isPremium: boolean("is_premium").notNull().default(false), // Premium currency only
+  isLimited: boolean("is_limited").notNull().default(false), // Limited time availability
+  availableUntil: timestamp("available_until"), // When limited item expires
+  metadata: jsonb("metadata"), // Additional data (animation URLs, sound effects, etc.)
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// User inventory
+export const userInventory = pgTable("user_inventory", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  cosmeticId: varchar("cosmetic_id").references(() => cosmeticItems.id).notNull(),
+  isEquipped: boolean("is_equipped").notNull().default(false),
+  acquiredAt: timestamp("acquired_at").notNull().defaultNow(),
+}, (table) => [
+  index("idx_user_inventory_user_id").on(table.userId),
+]);
+
+// Battle Pass seasons
+export const battlePasses = pgTable("battle_passes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  seasonNumber: integer("season_number").notNull().unique(),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull().default("9.99"),
+  premiumPrice: decimal("premium_price", { precision: 10, scale: 2 }).notNull().default("19.99"),
+  maxTiers: integer("max_tiers").notNull().default(50),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  isActive: boolean("is_active").notNull().default(false),
+  themeImageUrl: varchar("theme_image_url"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Battle Pass tier rewards
+export const battlePassTiers = pgTable("battle_pass_tiers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  battlePassId: varchar("battle_pass_id").references(() => battlePasses.id).notNull(),
+  tier: integer("tier").notNull(),
+  xpRequired: integer("xp_required").notNull(),
+  freeRewardType: varchar("free_reward_type"), // xp_boost, currency, cosmetic
+  freeRewardId: varchar("free_reward_id"), // cosmeticId if type is cosmetic
+  freeRewardAmount: integer("free_reward_amount"), // Amount of currency/XP
+  premiumRewardType: varchar("premium_reward_type"),
+  premiumRewardId: varchar("premium_reward_id"),
+  premiumRewardAmount: integer("premium_reward_amount"),
+  isPremiumOnly: boolean("is_premium_only").notNull().default(false),
+}, (table) => [
+  index("idx_battle_pass_tiers_pass_id").on(table.battlePassId),
+]);
+
+// User Battle Pass progress
+export const userBattlePass = pgTable("user_battle_pass", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  battlePassId: varchar("battle_pass_id").references(() => battlePasses.id).notNull(),
+  isPremium: boolean("is_premium").notNull().default(false),
+  currentTier: integer("current_tier").notNull().default(0),
+  currentXP: integer("current_xp").notNull().default(0),
+  purchasedAt: timestamp("purchased_at"),
+  claimedRewards: jsonb("claimed_rewards").$type<number[]>().notNull().default([]),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  index("idx_user_battle_pass_user_id").on(table.userId),
+  index("idx_user_battle_pass_battle_pass_id").on(table.battlePassId),
+]);
+
+// Daily challenges
+export const dailyChallenges = pgTable("daily_challenges", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  description: text("description").notNull(),
+  type: varchar("type").notNull(), // win_battles, play_battles, win_streak, earn_score, use_character
+  requirement: integer("requirement").notNull(), // Number required (e.g., 3 battles, 5 wins)
+  xpReward: integer("xp_reward").notNull(),
+  currencyReward: integer("currency_reward").notNull().default(0),
+  difficulty: varchar("difficulty").notNull().default("easy"), // easy, medium, hard
+  isActive: boolean("is_active").notNull().default(true),
+  rotatesDaily: boolean("rotates_daily").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// User challenge progress
+export const userChallengeProgress = pgTable("user_challenge_progress", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  challengeId: varchar("challenge_id").references(() => dailyChallenges.id).notNull(),
+  progress: integer("progress").notNull().default(0),
+  isCompleted: boolean("is_completed").notNull().default(false),
+  completedAt: timestamp("completed_at"),
+  rewardClaimed: boolean("reward_claimed").notNull().default(false),
+  dateAssigned: timestamp("date_assigned").notNull().defaultNow(),
+}, (table) => [
+  index("idx_user_challenge_progress_user_id").on(table.userId),
+  index("idx_user_challenge_progress_challenge_id").on(table.challengeId),
+]);
+
+// Virtual currency transactions
+export const currencyTransactions = pgTable("currency_transactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  amount: integer("amount").notNull(),
+  type: varchar("type").notNull(), // earned, spent, purchased, refunded
+  source: varchar("source").notNull(), // battle_win, level_up, challenge, purchase, cosmetic_buy
+  metadata: jsonb("metadata"), // Additional context
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [
+  index("idx_currency_transactions_user_id").on(table.userId),
+]);
+
+export const insertUserProgressSchema = createInsertSchema(userProgress).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertCosmeticItemSchema = createInsertSchema(cosmeticItems).omit({ id: true, createdAt: true });
+export const insertUserInventorySchema = createInsertSchema(userInventory).omit({ id: true, acquiredAt: true });
+export const insertBattlePassSchema = createInsertSchema(battlePasses).omit({ id: true, createdAt: true });
+export const insertUserBattlePassSchema = createInsertSchema(userBattlePass).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertDailyChallengeSchema = createInsertSchema(dailyChallenges).omit({ id: true, createdAt: true });
+
+export type UserProgress = typeof userProgress.$inferSelect;
+export type InsertUserProgress = z.infer<typeof insertUserProgressSchema>;
+export type CosmeticItem = typeof cosmeticItems.$inferSelect;
+export type InsertCosmeticItem = z.infer<typeof insertCosmeticItemSchema>;
+export type UserInventory = typeof userInventory.$inferSelect;
+export type BattlePass = typeof battlePasses.$inferSelect;
+export type UserBattlePass = typeof userBattlePass.$inferSelect;
+export type DailyChallenge = typeof dailyChallenges.$inferSelect;
+
 // Arc Blockchain monetization configuration
 export const MONETIZATION_CONFIG = {
   ARC_REWARDS: {
