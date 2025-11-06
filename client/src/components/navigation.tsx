@@ -9,6 +9,7 @@ import {
   Crown,
   Wallet,
   User,
+  GraduationCap,
 } from "lucide-react";
 
 export function Navigation() {
@@ -45,6 +46,17 @@ export function Navigation() {
             data-testid="nav-tournaments"
           >
             <Trophy className="w-4 h-4" />
+          </Button>
+        </Link>
+
+        <Link href="/training">
+          <Button
+            variant="outline"
+            size="sm"
+            className="bg-purple-800 border-purple-700 hover:bg-purple-700"
+            data-testid="nav-training"
+          >
+            <GraduationCap className="w-4 h-4" />
           </Button>
         </Link>
 

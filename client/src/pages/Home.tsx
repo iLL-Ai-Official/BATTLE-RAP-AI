@@ -8,6 +8,7 @@ import { Mic, Trophy, Zap, Crown, TrendingUp, Settings } from "lucide-react";
 import { Link } from "wouter";
 
 import { SocialShare } from "@/components/SocialShare";
+// import { XPDisplay } from "@/components/XPDisplay"; // Temporarily disabled - needs React hooks debugging
 
 interface SubscriptionStatus {
   tier: 'free' | 'premium' | 'pro';
@@ -71,35 +72,44 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6">
       <div className="container mx-auto max-w-6xl">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-white mb-2">
-              Welcome back, {(user as any)?.firstName || 'Rapper'}!
-            </h1>
-            <div className="flex items-center gap-2">
-              <Badge className={`${getTierColor(subscriptionStatus?.tier || 'free')} bg-slate-800`}>
-                {getTierIcon(subscriptionStatus?.tier || 'free')}
-                <span className="ml-1 capitalize">{subscriptionStatus?.tier || 'Free'}</span>
-              </Badge>
-              {subscriptionStatus?.tier === 'free' && (
-                <Link href="/subscribe?tier=premium">
-                  <Button size="sm" variant="outline" className="border-purple-400 text-purple-400 hover:bg-purple-400 hover:text-white">
-                    Upgrade
-                  </Button>
-                </Link>
-              )}
+        <div className="mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h1 className="text-4xl font-bold text-white mb-2">
+                Welcome back, {(user as any)?.firstName || 'Rapper'}!
+              </h1>
+              <div className="flex items-center gap-2">
+                <Badge className={`${getTierColor(subscriptionStatus?.tier || 'free')} bg-slate-800`}>
+                  {getTierIcon(subscriptionStatus?.tier || 'free')}
+                  <span className="ml-1 capitalize">{subscriptionStatus?.tier || 'Free'}</span>
+                </Badge>
+                {subscriptionStatus?.tier === 'free' && (
+                  <Link href="/subscribe?tier=premium">
+                    <Button size="sm" variant="outline" className="border-purple-400 text-purple-400 hover:bg-purple-400 hover:text-white">
+                      Upgrade
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <Button
+                onClick={() => window.location.href = '/api/logout'}
+                variant="outline"
+                className="border-slate-600 text-slate-300 hover:bg-slate-700"
+              >
+                Logout
+              </Button>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <Button
-              onClick={() => window.location.href = '/api/logout'}
-              variant="outline"
-              className="border-slate-600 text-slate-300 hover:bg-slate-700"
-            >
-              Logout
-            </Button>
-          </div>
+          {/* XP Display - Temporarily disabled while debugging React hooks issue */}
+          {/* {user && (user as any)?.id && (
+            <div className="mt-4">
+              <XPDisplay userId={(user as any).id} showLevelUpAnimation={true} />
+            </div>
+          )} */}
         </div>
 
         {/* Battle Status */}

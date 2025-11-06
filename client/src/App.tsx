@@ -23,6 +23,8 @@ import SafetyCenter from "@/pages/SafetyCenter";
 import CloneManager from "@/pages/clone-manager";
 import ProfilePage from "@/pages/profile";
 import WalletPage from "@/pages/wallet";
+// import TrainingPage from "@/pages/Training"; // Temporarily disabled - debugging React hooks
+// import AdminWalletPage from "@/pages/AdminWallet"; // Temporarily disabled - debugging React hooks
 import NotFound from "@/pages/not-found";
 import AdminPage from "@/pages/admin";
 
@@ -65,7 +67,9 @@ function Router() {
           <Route path="/profile/:userId" component={ProfilePage} />
           <Route path="/profile" component={ProfilePage} />
           <Route path="/wallet" component={WalletPage} />
+          {/* <Route path="/training" component={TrainingPage} /> */}
           <Route path="/admin" component={AdminPage} />
+          {/* <Route path="/admin/wallets" component={AdminWalletPage} /> */}
           <Route component={NotFound} />
         </>
       )}
