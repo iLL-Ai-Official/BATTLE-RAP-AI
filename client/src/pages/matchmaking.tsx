@@ -43,7 +43,7 @@ export default function MatchmakingPage() {
   // Fetch matchmaking status
   const { data: status } = useQuery<MatchmakingStatus>({
     queryKey: ['/api/matchmaking/status'],
-    refetchInterval: (data) => data?.inQueue ? 2000 : false, // Poll every 2s when in queue
+    refetchInterval: 2000, // Poll every 2 seconds
   });
 
   // Fetch player stats
