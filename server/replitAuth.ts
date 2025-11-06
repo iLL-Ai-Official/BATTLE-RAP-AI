@@ -8,6 +8,7 @@ import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 import LocalStrategy from 'passport-local';
+import bcrypt from 'bcryptjs';
 
 // Determine auth mode: prefer Replit OIDC when REPLIT_DOMAINS is set.
 const hasReplit = !!process.env.REPLIT_DOMAINS;
@@ -86,27 +87,36 @@ export async function setupAuth(app: Express) {
   app.use(passport.session());
   // If AUTH_PROVIDER is set to 'local' or REPLIT_DOMAINS is not present, configure a local strategy
   if (!hasReplit || authProvider === 'local') {
-    // Local strategy: username -> user id. Password is ignored in dev by default.
-    passport.use(new LocalStrategy.Strategy(async (username: string, password: string, done: any) => {
+    // Local strategy: email/password authentication with bcrypt
+    passport.use(new LocalStrategy.Strategy({
+      usernameField: 'email',
+      passwordField: 'password'
+    }, async (email: string, password: string, done: any) => {
       try {
-        const id = username;
-        // Upsert a minimal user record
-        await storage.upsertUser({
-          id,
-          email: `${username}@local`,
-          firstName: username,
-          lastName: '',
-          profileImageUrl: '',
-          subscriptionTier: 'free',
-          subscriptionStatus: 'free',
-          battlesRemaining: 3,
-          lastBattleReset: new Date(),
-        });
-        const user: any = { id };
-        // set minimal claims for downstream checks
-        user.claims = { sub: id };
-        user.expires_at = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 365; // 1 year
-        return done(null, user);
+        // Find user by email
+        const user = await storage.getUserByEmail(email);
+        
+        if (!user) {
+          return done(null, false, { message: 'Invalid email or password' });
+        }
+        
+        // Verify password
+        if (!user.passwordHash) {
+          return done(null, false, { message: 'Invalid email or password' });
+        }
+        
+        const isValidPassword = await bcrypt.compare(password, user.passwordHash);
+        
+        if (!isValidPassword) {
+          return done(null, false, { message: 'Invalid email or password' });
+        }
+        
+        // Create session user object
+        const sessionUser: any = { id: user.id };
+        sessionUser.claims = { sub: user.id, email: user.email };
+        sessionUser.expires_at = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 365; // 1 year
+        
+        return done(null, sessionUser);
       } catch (err) {
         return done(err as any);
       }
