@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Production Debug</title>
+</head>
+<body>
+    <h1>Deployment Checklist</h1>
+    <pre id="output">Loading...</pre>
+    <script>
+        const checks = [];
+        
+        // Check 1: Can we load the main JS?
+        fetch('/assets/index-CxTkSzhn.js')
+            .then(r => checks.push(`✅ Main JS loads: ${r.status}`))
+            .catch(e => checks.push(`❌ Main JS error: ${e.message}`))
+            .finally(() => {
+                // Check 2: API endpoint
+                return fetch('/api/auth/user');
+            })
+            .then(r => checks.push(`✅ API endpoint: ${r.status}`))
+            .catch(e => checks.push(`❌ API error: ${e.message}`))
+            .finally(() => {
+                document.getElementById('output').textContent = checks.join('\n');
+            });
+    </script>
+</body>
+</html>
