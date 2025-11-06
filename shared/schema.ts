@@ -40,10 +40,10 @@ export const battles = pgTable("battles", {
     createdAt: Date;
   }>>().notNull().default([]),
   status: text("status").notNull().default("active"),
-  // Arc Blockchain wager battling
-  isWagerBattle: boolean("is_wager_battle").notNull().default(false), // Whether this is a wager battle
-  wagerAmountUSDC: decimal("wager_amount_usdc", { precision: 20, scale: 6 }), // USDC wager amount
-  wagerTxHash: varchar("wager_tx_hash"), // Arc blockchain transaction hash for wager
+  // Arc Blockchain competitive stakes
+  isStakeBattle: boolean("is_stake_battle").notNull().default(false), // Whether this is a competitive stake battle
+  stakeAmountUSDC: decimal("stake_amount_usdc", { precision: 20, scale: 6 }), // USDC competitive stake amount
+  stakeTxHash: varchar("stake_tx_hash"), // Arc blockchain transaction hash for competitive stake
   rewardTxHash: varchar("reward_tx_hash"), // Arc blockchain transaction hash for reward payout
   // Multiplayer PvP support
   isMultiplayer: boolean("is_multiplayer").notNull().default(false), // PvP battle vs real player
@@ -425,7 +425,7 @@ export const arcTransactions = pgTable("arc_transactions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull(),
   txHash: varchar("tx_hash").notNull().unique(), // Arc blockchain transaction hash
-  txType: varchar("tx_type").notNull(), // battle_win, tournament_prize, wager_deposit, wager_payout, voice_command
+  txType: varchar("tx_type").notNull(), // battle_win, tournament_prize, stake_deposit, stake_payout, voice_command
   amount: decimal("amount", { precision: 20, scale: 6 }).notNull(), // USDC amount
   fromAddress: varchar("from_address").notNull(),
   toAddress: varchar("to_address").notNull(),
@@ -456,8 +456,8 @@ export type ArcTransaction = typeof arcTransactions.$inferSelect;
 export const matchmakingQueue = pgTable("matchmaking_queue", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull(),
-  queueType: varchar("queue_type").notNull(), // "casual", "ranked", "wager", "tournament"
-  wagerAmount: decimal("wager_amount", { precision: 20, scale: 6 }), // For wager matches
+  queueType: varchar("queue_type").notNull(), // "casual", "ranked", "stakes", "tournament"
+  stakeAmount: decimal("stake_amount", { precision: 20, scale: 6 }), // For competitive stake matches
   skillRating: integer("skill_rating").default(1000), // ELO-style rating for matchmaking
   status: varchar("status").notNull().default("waiting"), // waiting, matched, expired
   matchedWithUserId: varchar("matched_with_user_id"), // Opponent user ID when matched
@@ -723,10 +723,10 @@ export const MONETIZATION_CONFIG = {
     TOURNAMENT_3RD: "1.00", // $1.00 USDC for 3rd place
     VOICE_COMMAND_REWARD: "0.01", // $0.01 USDC for using voice command
   },
-  WAGER_LIMITS: {
-    MIN_WAGER_USDC: "0.50", // Minimum wager: $0.50 USDC
-    MAX_WAGER_USDC: "100.00", // Maximum wager: $100 USDC
-    PLATFORM_FEE_PERCENT: 5, // 5% platform fee on wagers
+  COMPETITIVE_STAKES_LIMITS: {
+    MIN_STAKE_USDC: "0.50", // Minimum competitive stake: $0.50 USDC
+    MAX_STAKE_USDC: "100.00", // Maximum competitive stake: $100 USDC
+    PLATFORM_FEE_PERCENT: 5, // 5% platform fee on competitive challenges
   },
   TOURNAMENT_PRIZE_POOLS: {
     SMALL: {
