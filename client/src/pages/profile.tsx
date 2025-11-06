@@ -43,7 +43,7 @@ interface Profile {
 
 export default function ProfilePage() {
   const [, params] = useRoute("/profile/:userId");
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -58,12 +58,15 @@ export default function ProfilePage() {
   
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   
-  const isOwnProfile = params?.userId === (currentUser as any)?.id;
+  // If no userId param, assume viewing own profile; otherwise check if param matches current user
+  const isOwnProfile = !params?.userId || params?.userId === (currentUser as any)?.id;
   const userId = params?.userId || (currentUser as any)?.id;
 
   useEffect(() => {
-    fetchProfile();
-  }, [userId]);
+    if (userId && !authLoading) {
+      fetchProfile();
+    }
+  }, [userId, authLoading]);
 
   const fetchProfile = async () => {
     try {
