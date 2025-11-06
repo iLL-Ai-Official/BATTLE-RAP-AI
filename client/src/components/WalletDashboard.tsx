@@ -132,14 +132,20 @@ export function WalletDashboard() {
             <div className="flex items-center justify-center p-8">
               <div className="animate-spin w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full" />
             </div>
-          ) : (
+          ) : storeCredit ? (
             <div className="p-6 bg-gradient-to-br from-green-500/20 to-green-500/10 rounded-lg border border-green-500/30">
               <div className="text-sm text-green-300 mb-1">Available Credits</div>
               <div className="text-5xl font-bold text-green-400 mb-2" data-testid="text-store-credits">
-                ${storeCredit?.balance?.toFixed(2) || '0.00'}
+                ${storeCredit.balance?.toFixed(2) || '0.00'}
               </div>
               <p className="text-xs text-green-300/70 mt-2">
                 🎤 Use credits to enter battles, train with AI, and unlock features
+              </p>
+            </div>
+          ) : (
+            <div className="p-6 bg-gradient-to-br from-red-500/20 to-red-500/10 rounded-lg border border-red-500/30">
+              <p className="text-red-300 text-sm">
+                Unable to load store credits. Please refresh the page or contact support if the issue persists.
               </p>
             </div>
           )}
