@@ -7,6 +7,8 @@ import {
   processedWebhookEvents,
   userClones,
   arcTransactions,
+  userProgress,
+  currencyTransactions,
   type User,
   type UpsertUser,
   type Battle,
@@ -27,6 +29,7 @@ import {
   type InsertUserClone,
   type ArcTransaction,
   type InsertArcTransaction,
+  type UserProgress,
   SUBSCRIPTION_TIERS,
   MONETIZATION_CONFIG,
 } from "@shared/schema";
@@ -34,6 +37,7 @@ import { getCharacterById } from "@shared/characters";
 import { db, withRetry } from "./db";
 import { eq, and, gte, lt, sql, desc, count, max } from "drizzle-orm";
 import NodeCache from 'node-cache';
+import { xpService } from "./services/xpService";
 
 // Initialize cache with 10 minute TTL and 5 minute check period
 const cache = new NodeCache({ stdTTL: 600, checkperiod: 300 });
@@ -137,6 +141,13 @@ export interface IStorage {
     preferredJurisdiction: string | null;
     ttsProvider: string;
   }>;
+
+  // XP and Progression operations
+  initializeUserProgress(userId: string): Promise<UserProgress>;
+  getUserProgress(userId: string): Promise<UserProgress | undefined>;
+  updateUserProgress(userId: string, totalXP?: number, level?: number, title?: string): Promise<UserProgress>;
+  addCurrencyTransaction(userId: string, amount: number, type: string, description: string): Promise<void>;
+  getTopUsersByLevel(limit: number): Promise<Array<{ userId: string; level: number; totalXP: number; title: string | null }>>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -391,6 +402,22 @@ export class DatabaseStorage implements IStorage {
                 updatedAt: new Date(),
               })
               .where(eq(users.id, battle.userId));
+          }
+        }
+
+        // Award XP for battle completion
+        if (battle.userId) {
+          const won = battle.userScore > battle.aiScore;
+          const levelUpResult = await xpService.awardBattleXP(battle.userId, {
+            won,
+            score: battle.userScore,
+            opponentScore: battle.aiScore,
+            roundsPlayed: battle.rounds?.length || 0,
+            difficulty: battle.difficulty,
+          });
+
+          if (levelUpResult.leveledUp) {
+            console.log(`🎉 User ${battle.userId} leveled up! ${levelUpResult.oldLevel} → ${levelUpResult.newLevel}`);
           }
         }
       },
@@ -1202,10 +1229,102 @@ export class DatabaseStorage implements IStorage {
       dailySpendLimitUSDC: user.dailySpendLimitUSDC || "50.00",
       perTxLimitUSDC: user.perTxLimitUSDC || "25.00",
       dailySpendUsedUSDC: user.dailySpendUsedUSDC || "0.00",
-      moderationOptIn: user.moderationOptIn !== undefined ? user.moderationOptIn : true,
+      moderationOptIn: user.moderationOptIn ?? true,
       preferredJurisdiction: user.preferredJurisdiction,
       ttsProvider: user.ttsProvider || 'groq',
     };
+  }
+
+  async initializeUserProgress(userId: string): Promise<UserProgress> {
+    const [progress] = await db
+      .insert(userProgress)
+      .values({
+        userId,
+        level: 1,
+        currentXP: 0,
+        totalXP: 0,
+        winStreak: 0,
+        bestWinStreak: 0,
+        totalBattlesPlayed: 0,
+        totalBattlesWon: 0,
+        totalTournamentsWon: 0,
+        prestige: 0,
+      })
+      .onConflictDoNothing()
+      .returning();
+
+    if (progress) {
+      console.log(`✨ Initialized user progress for user ${userId}`);
+      return progress;
+    }
+
+    const [existing] = await db
+      .select()
+      .from(userProgress)
+      .where(eq(userProgress.userId, userId));
+
+    return existing;
+  }
+
+  async getUserProgress(userId: string): Promise<UserProgress | undefined> {
+    const [progress] = await db
+      .select()
+      .from(userProgress)
+      .where(eq(userProgress.userId, userId));
+
+    return progress;
+  }
+
+  async updateUserProgress(userId: string, totalXP?: number, level?: number, title?: string): Promise<UserProgress> {
+    const updates: any = {
+      updatedAt: new Date(),
+    };
+
+    if (totalXP !== undefined) {
+      updates.totalXP = totalXP;
+    }
+
+    if (level !== undefined) {
+      updates.level = level;
+    }
+
+    if (title !== undefined) {
+      updates.title = title;
+    }
+
+    const [progress] = await db
+      .update(userProgress)
+      .set(updates)
+      .where(eq(userProgress.userId, userId))
+      .returning();
+
+    return progress;
+  }
+
+  async addCurrencyTransaction(userId: string, amount: number, type: string, description: string): Promise<void> {
+    await db.insert(currencyTransactions).values({
+      userId,
+      amount,
+      type,
+      source: description,
+    });
+
+    console.log(`💰 Currency transaction: ${amount} (${type}) - ${description}`);
+  }
+
+  async getTopUsersByLevel(limit: number): Promise<Array<{ userId: string; level: number; totalXP: number; title: string | null }>> {
+    const topUsers = await db
+      .select({
+        userId: userProgress.userId,
+        level: userProgress.level,
+        totalXP: userProgress.totalXP,
+        title: userProgress.title,
+      })
+      .from(userProgress)
+      .orderBy(desc(userProgress.level), desc(userProgress.totalXP))
+      .limit(limit);
+
+    return topUsers;
   }
 }
 

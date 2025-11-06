@@ -21,6 +21,9 @@ import { createArcBlockchainService } from "./arcBlockchain";
 import { createAIPaymentAgent } from "./services/ai-payment-agent";
 import { getElevenLabsSFXService } from "./services/elevenlabs-sfx";
 import { requireAgeVerification, requireToSAcceptance, checkJurisdiction } from './middleware/legal';
+import { xpService } from "./services/xpService";
+import { trainingService } from "./services/trainingService";
+import { walletService } from "./services/walletService";
 // using shared exported instance from services/matchmaking
 
 // Initialize Arc Blockchain Service
@@ -95,6 +98,147 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     console.log('🏥 Health check:', health);
     res.json(health);
+  });
+
+  // XP and Progression API endpoints
+  app.get('/api/users/:id/progress', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.params.id;
+      const authenticatedUserId = req.user.claims.sub;
+
+      if (userId !== authenticatedUserId) {
+        return res.status(403).json({ error: 'Unauthorized to view this user\'s progress' });
+      }
+
+      const progressInfo = await xpService.getUserProgressInfo(userId);
+      res.json(progressInfo);
+    } catch (error: any) {
+      console.error('Error fetching user progress:', error);
+      res.status(500).json({ error: 'Failed to fetch user progress' });
+    }
+  });
+
+  app.post('/api/xp/award', isAuthenticated, async (req: any, res) => {
+    try {
+      const { userId, amount, reason } = req.body;
+      const authenticatedUserId = req.user.claims.sub;
+
+      if (!userId || !amount || !reason) {
+        return res.status(400).json({ error: 'userId, amount, and reason are required' });
+      }
+
+      // Validate amount is a positive number
+      const xpAmount = Number(amount);
+      if (isNaN(xpAmount) || xpAmount <= 0) {
+        return res.status(400).json({ error: 'amount must be a positive number' });
+      }
+
+      const authenticatedUser = await storage.getUser(authenticatedUserId);
+      if (!authenticatedUser || authenticatedUser.subscriptionTier !== 'pro') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      const levelUpResult = await xpService.awardXP(userId, xpAmount, reason);
+
+      res.json({
+        success: true,
+        xpAwarded: amount,
+        levelUpResult,
+      });
+    } catch (error: any) {
+      console.error('Error awarding XP:', error);
+      res.status(500).json({ error: 'Failed to award XP' });
+    }
+  });
+
+  app.get('/api/leaderboard', async (_req, res) => {
+    try {
+      const topUsers = await xpService.getLeaderboard(10);
+
+      const leaderboard = await Promise.all(
+        topUsers.map(async (entry) => {
+          const user = await storage.getUser(entry.userId);
+          return {
+            userId: entry.userId,
+            username: user?.firstName || user?.email?.split('@')[0] || 'Anonymous',
+            level: entry.level,
+            totalXP: entry.totalXP,
+            title: entry.title,
+          };
+        })
+      );
+
+      res.json(leaderboard);
+    } catch (error: any) {
+      console.error('Error fetching leaderboard:', error);
+      res.status(500).json({ error: 'Failed to fetch leaderboard' });
+    }
+  });
+
+  // Training API endpoints
+  app.get('/api/training/lessons', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const category = req.query.category as string | undefined;
+
+      const lessons = await trainingService.getLessons(userId, category);
+      res.json(lessons);
+    } catch (error: any) {
+      console.error('Error fetching training lessons:', error);
+      res.status(500).json({ error: 'Failed to fetch training lessons' });
+    }
+  });
+
+  app.get('/api/training/lessons/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const lessonId = req.params.id;
+
+      const lesson = await trainingService.getLesson(userId, lessonId);
+      res.json(lesson);
+    } catch (error: any) {
+      console.error('Error fetching lesson:', error);
+      res.status(error.message?.includes('locked') ? 403 : 500).json({ error: error.message });
+    }
+  });
+
+  app.post('/api/training/practice', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { lessonId, score } = req.body;
+
+      if (!lessonId || score === undefined) {
+        return res.status(400).json({ error: 'lessonId and score are required' });
+      }
+
+      const result = await trainingService.completePractice(userId, lessonId, score);
+      res.json(result);
+    } catch (error: any) {
+      console.error('Error completing practice:', error);
+      res.status(500).json({ error: 'Failed to complete practice' });
+    }
+  });
+
+  app.get('/api/training/progress', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+
+      const progress = await trainingService.getUserProgress(userId);
+      res.json(progress);
+    } catch (error: any) {
+      console.error('Error fetching training progress:', error);
+      res.status(500).json({ error: 'Failed to fetch training progress' });
+    }
+  });
+
+  app.get('/api/training/categories', async (_req, res) => {
+    try {
+      const categories = await trainingService.getCategories();
+      res.json(categories);
+    } catch (error: any) {
+      console.error('Error fetching categories:', error);
+      res.status(500).json({ error: 'Failed to fetch categories' });
+    }
   });
 
   // ElevenLabs Sound Effects endpoints
@@ -1901,6 +2045,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       await storage.updateBattleState(battleId, sanitizedUpdates);
+
+      if (sanitizedUpdates.isComplete === true) {
+        const battle = await storage.getBattle(battleId);
+        if (battle && battle.userId) {
+          console.log(`🎮 Battle completed - awarding XP to user ${battle.userId}`);
+          
+          const battleResult = {
+            won: battle.userScore > battle.aiScore,
+            score: battle.userScore,
+            opponentScore: battle.aiScore,
+            roundsPlayed: battle.rounds?.length || 1,
+            difficulty: battle.difficulty,
+          };
+
+          try {
+            const levelUpResult = await xpService.awardBattleXP(battle.userId, battleResult);
+            
+            if (levelUpResult.leveledUp) {
+              console.log(`🎉 User ${battle.userId} leveled up! ${levelUpResult.oldLevel} → ${levelUpResult.newLevel}`);
+            }
+
+            await storage.completeBattle(battleId);
+          } catch (xpError) {
+            console.error('Error awarding battle XP:', xpError);
+          }
+        }
+      }
+
       res.json({ success: true });
     } catch (error) {
       // SECURITY: Don't expose internal error details
@@ -3589,6 +3761,130 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error awarding tournament prizes:', error);
       res.status(500).json({ message: 'Failed to award prizes' });
+    }
+  });
+
+  // Platform Wallet Admin API endpoints
+  app.get('/api/admin/wallets', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+
+      if (!user || user.subscriptionTier !== 'pro') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      const stats = await walletService.getWalletStats();
+      const balanceCheck = await walletService.checkBalances();
+
+      res.json({
+        wallets: stats.wallets,
+        totalBalance: stats.totalBalance,
+        alerts: balanceCheck.alerts,
+        walletsCount: stats.walletsCount,
+      });
+    } catch (error: any) {
+      console.error('Error fetching wallets:', error);
+      res.status(500).json({ error: 'Failed to fetch wallets' });
+    }
+  });
+
+  app.post('/api/admin/wallets/transfer', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+
+      if (!user || user.subscriptionTier !== 'pro') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      const { fromWalletType, toWalletType, amount, description } = req.body;
+
+      if (!fromWalletType || !toWalletType || !amount || !description) {
+        return res.status(400).json({ 
+          error: 'fromWalletType, toWalletType, amount, and description are required' 
+        });
+      }
+
+      const result = await walletService.manualTransfer(
+        fromWalletType,
+        toWalletType,
+        parseFloat(amount),
+        description
+      );
+
+      if (!result.success) {
+        return res.status(400).json({ error: result.error });
+      }
+
+      res.json({
+        success: true,
+        txId: result.txId,
+        message: `Transferred $${amount} from ${fromWalletType} to ${toWalletType}`,
+      });
+    } catch (error: any) {
+      console.error('Error transferring funds:', error);
+      res.status(500).json({ error: 'Failed to transfer funds' });
+    }
+  });
+
+  app.get('/api/admin/wallets/transactions', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+
+      if (!user || user.subscriptionTier !== 'pro') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      const walletId = req.query.walletId as string | undefined;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 100;
+
+      const transactions = await walletService.getTransactions(walletId, limit);
+
+      res.json(transactions);
+    } catch (error: any) {
+      console.error('Error fetching transactions:', error);
+      res.status(500).json({ error: 'Failed to fetch transactions' });
+    }
+  });
+
+  app.post('/api/admin/wallets/initialize', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+
+      if (!user || user.subscriptionTier !== 'pro') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      await walletService.initializePlatformWallets();
+
+      res.json({
+        success: true,
+        message: 'Platform wallets initialized successfully',
+      });
+    } catch (error: any) {
+      console.error('Error initializing wallets:', error);
+      res.status(500).json({ error: 'Failed to initialize wallets' });
+    }
+  });
+
+  app.post('/api/admin/wallets/check-balances', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+
+      if (!user || user.subscriptionTier !== 'pro') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      const result = await walletService.checkBalances();
+
+      res.json(result);
+    } catch (error: any) {
+      console.error('Error checking balances:', error);
+      res.status(500).json({ error: 'Failed to check balances' });
     }
   });
 
