@@ -169,11 +169,30 @@ class MuseTalkIntegration:
             logger.error(f"Simulation failed: {e}")
             return None
     
+    def _validate_inputs(self, audio_path: str, avatar_image_path: str, 
+                        character_id: str) -> None:
+        """Validate and sanitize inputs to prevent path traversal and other attacks"""
+        # Validate character_id doesn't contain path traversal sequences
+        if any(char in character_id for char in ['/', '\\', '..', '\0']):
+            raise ValueError(f"Invalid character_id: contains unsafe characters")
+        
+        # Validate that file paths exist and are absolute/resolved paths
+        audio_file = Path(audio_path).resolve()
+        avatar_file = Path(avatar_image_path).resolve()
+        
+        if not audio_file.exists():
+            raise FileNotFoundError(f"Audio file not found: {audio_path}")
+        if not avatar_file.exists():
+            raise FileNotFoundError(f"Avatar file not found: {avatar_image_path}")
+    
     def _generate_full_musetalk_video(self, audio_path: str, avatar_image_path: str, 
                                     character_id: str) -> Optional[str]:
         """Generate full MuseTalk video (when models are available)"""
         try:
             logger.info(f"Generating full MuseTalk video for {character_id}")
+            
+            # Validate inputs to prevent injection and path traversal attacks
+            self._validate_inputs(audio_path, avatar_image_path, character_id)
             
             # Create output directory
             output_dir = Path("results") / "musetalk" / character_id
