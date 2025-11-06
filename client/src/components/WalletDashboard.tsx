@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Wallet, Copy, Check, ExternalLink, TrendingUp, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface WalletData {
   balance: string;
@@ -30,6 +31,7 @@ export function WalletDashboard() {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
+  const [displayBalance, setDisplayBalance] = useState(0);
 
   // Fetch store credits (in-app credits for battles)
   const { data: storeCredit, isLoading: storeCreditLoading } = useQuery<StoreCreditData>({
@@ -46,6 +48,29 @@ export function WalletDashboard() {
     queryKey: ["/api/arc/wallet/transactions"],
   });
 
+  // Count-up animation for balance
+  useEffect(() => {
+    if (walletData?.balance) {
+      const targetBalance = parseFloat(walletData.balance);
+      const duration = 1500; // 1.5 seconds
+      const steps = 60;
+      const increment = targetBalance / steps;
+      let current = 0;
+      
+      const timer = setInterval(() => {
+        current += increment;
+        if (current >= targetBalance) {
+          setDisplayBalance(targetBalance);
+          clearInterval(timer);
+        } else {
+          setDisplayBalance(current);
+        }
+      }, duration / steps);
+      
+      return () => clearInterval(timer);
+    }
+  }, [walletData?.balance]);
+
   const copyAddress = () => {
     if (walletData?.walletAddress) {
       navigator.clipboard.writeText(walletData.walletAddress);
@@ -61,11 +86,27 @@ export function WalletDashboard() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "confirmed":
-        return <Check className="w-4 h-4 text-green-500" data-testid="icon-confirmed" />;
+        return (
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          >
+            <Check className="w-4 h-4 text-prism-cyan" data-testid="icon-confirmed" style={{ filter: 'drop-shadow(0 0 4px hsla(180, 100%, 50%, 0.6))' }} />
+          </motion.div>
+        );
       case "pending":
-        return <div className="w-4 h-4 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin" data-testid="icon-pending" />;
+        return (
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="w-4 h-4 border-2 border-neon-magenta border-t-transparent rounded-full"
+            data-testid="icon-pending"
+            style={{ boxShadow: '0 0 8px hsla(330, 100%, 50%, 0.4)' }}
+          />
+        );
       case "failed":
-        return <span className="text-red-500" data-testid="icon-failed">✕</span>;
+        return <span className="text-red-500" data-testid="icon-failed" style={{ filter: 'drop-shadow(0 0 4px rgba(239, 68, 68, 0.6))' }}>✕</span>;
       default:
         return null;
     }
@@ -73,9 +114,21 @@ export function WalletDashboard() {
 
   const getTypeIcon = (type: string) => {
     if (type.includes("deposit") || type.includes("stake")) {
-      return <ArrowDownRight className="w-4 h-4 text-red-500" data-testid="icon-outgoing" />;
+      return (
+        <ArrowDownRight
+          className="w-5 h-5 text-neon-magenta"
+          data-testid="icon-outgoing"
+          style={{ filter: 'drop-shadow(0 0 6px hsla(330, 100%, 50%, 0.6))' }}
+        />
+      );
     }
-    return <ArrowUpRight className="w-4 h-4 text-green-500" data-testid="icon-incoming" />;
+    return (
+      <ArrowUpRight
+        className="w-5 h-5 text-prism-cyan"
+        data-testid="icon-incoming"
+        style={{ filter: 'drop-shadow(0 0 6px hsla(180, 100%, 50%, 0.6))' }}
+      />
+    );
   };
 
   if (walletLoading) {
@@ -112,17 +165,22 @@ export function WalletDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Store Credits Card */}
-      <Card className="w-full border-2 border-green-500/30 bg-gradient-to-br from-green-500/5 to-green-500/10">
+      {/* Store Credits Card - Neon Apex Style */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="glass-card neon-border-cyan glow-pulse-cyan"
+      >
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2 text-green-400">
+              <CardTitle className="flex items-center gap-2 text-prism-cyan font-orbitron">
                 💰 Store Credits
               </CardTitle>
-              <CardDescription>Use these credits to battle AI opponents</CardDescription>
+              <CardDescription className="text-gray-400">Use these credits to battle AI opponents</CardDescription>
             </div>
-            <Badge className="bg-green-500/20 text-green-400 border-green-500/50">
+            <Badge className="stat-badge text-prism-cyan border-prism-cyan/50">
               Active
             </Badge>
           </div>
@@ -130,203 +188,303 @@ export function WalletDashboard() {
         <CardContent>
           {storeCreditLoading ? (
             <div className="flex items-center justify-center p-8">
-              <div className="animate-spin w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full" />
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                className="w-8 h-8 border-4 border-prism-cyan border-t-transparent rounded-full"
+              />
             </div>
           ) : storeCredit ? (
-            <div className="p-6 bg-gradient-to-br from-green-500/20 to-green-500/10 rounded-lg border border-green-500/30">
-              <div className="text-sm text-green-300 mb-1">Available Credits</div>
-              <div className="text-5xl font-bold text-green-400 mb-2" data-testid="text-store-credits">
+            <motion.div
+              initial={{ scale: 0.95 }}
+              animate={{ scale: 1 }}
+              className="p-6 gradient-card-bg rounded-lg border border-prism-cyan/30"
+            >
+              <div className="text-sm text-prism-cyan mb-1">Available Credits</div>
+              <div className="text-5xl font-orbitron font-bold text-prism-cyan mb-2 glow-pulse-cyan" data-testid="text-store-credits">
                 ${storeCredit.balance?.toFixed(2) || '0.00'}
               </div>
-              <p className="text-xs text-green-300/70 mt-2">
+              <p className="text-xs text-gray-400 mt-2">
                 🎤 Use credits to enter battles, train with AI, and unlock features
               </p>
-            </div>
+            </motion.div>
           ) : (
-            <div className="p-6 bg-gradient-to-br from-red-500/20 to-red-500/10 rounded-lg border border-red-500/30">
-              <p className="text-red-300 text-sm">
+            <div className="p-6 glass-panel rounded-lg border border-red-500/30">
+              <p className="text-red-400 text-sm">
                 Unable to load store credits. Please refresh the page or contact support if the issue persists.
               </p>
             </div>
           )}
         </CardContent>
-      </Card>
+      </motion.div>
 
-      {/* Arc Wallet Card */}
-      <Card className="w-full">
+      {/* Arc Wallet Card - Neon Apex Hero */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+        className="glass-card neon-border-magenta glow-pulse-magenta"
+      >
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2">
-                <Wallet className="w-5 h-5" />
+              <CardTitle className="flex items-center gap-2 font-orbitron text-neon-magenta">
+                <Wallet className="w-5 h-5" style={{ filter: 'drop-shadow(0 0 8px hsla(330, 100%, 50%, 0.6))' }} />
                 Arc Wallet
               </CardTitle>
-              <CardDescription>Circle's Arc L1 Blockchain</CardDescription>
+              <CardDescription className="text-gray-400">Circle's Arc L1 Blockchain</CardDescription>
             </div>
-            <Badge variant="outline" className="text-xs">
-              <span className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></span>
+            <Badge className="stat-badge text-prism-cyan border-prism-cyan/50">
+              <span className="w-2 h-2 bg-prism-cyan rounded-full mr-1 animate-pulse"></span>
               Live
             </Badge>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Balance Display */}
-          <div className="p-6 bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg border">
-            <div className="text-sm text-muted-foreground mb-1">USDC Balance</div>
-            <div className="text-4xl font-bold mb-4" data-testid="text-balance">
-              ${parseFloat(walletData.balance).toFixed(2)}
-            </div>
+          {/* Balance Display Hero */}
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="p-8 gradient-primary-bg rounded-lg border neon-border-cyan shadow-lg"
+          >
+            <div className="text-sm text-gray-300 mb-2">USDC Balance</div>
+            <motion.div
+              className="text-6xl font-orbitron font-bold text-white mb-4"
+              data-testid="text-balance"
+              style={{ textShadow: '0 0 20px hsla(180, 100%, 50%, 0.8), 0 0 40px hsla(180, 100%, 50%, 0.4)' }}
+            >
+              ${displayBalance.toFixed(2)}
+            </motion.div>
             <div className="flex items-center gap-2 text-sm">
-              <TrendingUp className="w-4 h-4 text-green-500" />
-              <span className="text-muted-foreground">Total Earned:</span>
-              <span className="font-semibold" data-testid="text-total-earned">
+              <TrendingUp className="w-4 h-4 text-neon-magenta" style={{ filter: 'drop-shadow(0 0 6px hsla(330, 100%, 50%, 0.6))' }} />
+              <span className="text-gray-300">Total Earned:</span>
+              <span className="stat-badge text-neon-magenta" data-testid="text-total-earned">
                 ${parseFloat(walletData.totalEarned).toFixed(2)} USDC
               </span>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Wallet Address */}
-          <div>
-            <div className="text-sm font-medium mb-2">Wallet Address</div>
-            <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
-              <code className="flex-1 text-xs truncate" data-testid="text-wallet-address">
+          {/* Arc Wallet Info */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="glass-panel rounded-lg p-4"
+          >
+            <div className="text-sm font-medium text-prism-cyan mb-3 flex items-center gap-2">
+              <Wallet className="w-4 h-4" style={{ filter: 'drop-shadow(0 0 6px hsla(180, 100%, 50%, 0.6))' }} />
+              Wallet Address
+            </div>
+            <div className="flex items-center gap-2 p-3 glass-panel neon-border-cyan rounded-lg">
+              <code className="flex-1 text-xs font-code truncate text-prism-cyan" data-testid="text-wallet-address">
                 {walletData.walletAddress}
               </code>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={copyAddress}
-                data-testid="button-copy-address"
-              >
-                {copied ? (
-                  <Check className="w-4 h-4" />
-                ) : (
-                  <Copy className="w-4 h-4" />
-                )}
-              </Button>
+              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={copyAddress}
+                  className="hover-lift"
+                  data-testid="button-copy-address"
+                >
+                  <AnimatePresence mode="wait">
+                    {copied ? (
+                      <motion.div
+                        key="check"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        exit={{ scale: 0 }}
+                      >
+                        <Check className="w-4 h-4 text-prism-cyan" />
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="copy"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        exit={{ scale: 0 }}
+                      >
+                        <Copy className="w-4 h-4 text-gray-400" />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </Button>
+              </motion.div>
             </div>
-            <p className="text-xs text-muted-foreground mt-2">
+            <p className="text-xs text-gray-400 mt-2">
               Send USDC to this address on Arc L1 to add funds
             </p>
-          </div>
+          </motion.div>
 
-          {/* Recent Transactions */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <div className="text-sm font-medium">Recent Transactions</div>
+          {/* Transaction History Timeline */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="text-sm font-medium text-neon-magenta font-orbitron">Recent Transactions</div>
               {transactions && transactions.length > 0 && (
-                <Button variant="ghost" size="sm" data-testid="button-view-all">
-                  <ExternalLink className="w-3 h-3 mr-1" />
-                  View All
-                </Button>
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button variant="ghost" size="sm" className="hover-lift text-prism-cyan" data-testid="button-view-all">
+                    <ExternalLink className="w-3 h-3 mr-1" />
+                    View All
+                  </Button>
+                </motion.div>
               )}
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {txLoading ? (
-                <div className="text-center py-4 text-sm text-muted-foreground">
-                  Loading transactions...
+                <div className="text-center py-4 text-sm text-gray-400">
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    className="w-6 h-6 border-4 border-prism-cyan border-t-transparent rounded-full mx-auto"
+                  />
+                  <p className="mt-2">Loading transactions...</p>
                 </div>
               ) : transactions && transactions.length > 0 ? (
-                transactions.slice(0, 5).map((tx) => (
-                  <button
-                    key={tx.txHash}
-                    onClick={() => setSelectedTx(tx)}
-                    className="w-full p-3 bg-muted hover:bg-muted/80 rounded-lg flex items-center justify-between transition-colors text-left"
-                    data-testid={`transaction-${tx.txHash}`}
-                  >
-                    <div className="flex items-center gap-3">
-                      {getTypeIcon(tx.txType)}
-                      <div>
-                        <div className="text-sm font-medium capitalize">
-                          {tx.txType.replace(/_/g, " ")}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {new Date(tx.createdAt).toLocaleDateString()}
+                transactions.slice(0, 5).map((tx, index) => {
+                  const isDeposit = tx.txType.includes("deposit") || tx.txType.includes("stake");
+                  const isPending = tx.status === "pending";
+                  return (
+                    <motion.button
+                      key={tx.txHash}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.05 }}
+                      whileHover={{ scale: 1.02, x: 4 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setSelectedTx(tx)}
+                      className={`w-full p-4 glass-panel rounded-lg flex items-center justify-between transition-all text-left hover-lift ${
+                        isDeposit ? 'neon-border-magenta' : 'neon-border-cyan'
+                      } ${isPending ? 'animate-pulse' : ''}`}
+                      data-testid={`transaction-${tx.txHash}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        {getTypeIcon(tx.txType)}
+                        <div>
+                          <div className="text-sm font-medium capitalize text-white">
+                            {tx.txType.replace(/_/g, " ")}
+                          </div>
+                          <div className="stat-badge text-xs mt-1">
+                            {new Date(tx.createdAt).toLocaleDateString()}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
-                        <div className="text-sm font-medium">
-                          ${parseFloat(tx.amountUSDC).toFixed(2)}
-                        </div>
-                        <div className="text-xs text-muted-foreground flex items-center gap-1">
-                          {getStatusIcon(tx.status)}
-                          <span className="capitalize">{tx.status}</span>
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <div className={`stat-badge font-orbitron ${isDeposit ? 'text-neon-magenta' : 'text-prism-cyan'}`}>
+                            ${parseFloat(tx.amountUSDC).toFixed(2)}
+                          </div>
+                          <div className="text-xs text-gray-400 flex items-center gap-1 mt-1">
+                            {getStatusIcon(tx.status)}
+                            <span className="capitalize">{tx.status}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </button>
-                ))
+                    </motion.button>
+                  );
+                })
               ) : (
-                <div className="text-center py-8 text-sm text-muted-foreground">
-                  <Wallet className="w-12 h-12 mx-auto mb-2 opacity-20" />
-                  <p>No transactions yet</p>
-                  <p className="text-xs mt-1">Win battles to earn USDC!</p>
-                </div>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-center py-8 glass-panel rounded-lg"
+                >
+                  <Wallet className="w-12 h-12 mx-auto mb-2 opacity-20 text-prism-cyan" />
+                  <p className="text-gray-400">No transactions yet</p>
+                  <p className="text-xs mt-1 text-gray-500">Win battles to earn USDC!</p>
+                </motion.div>
               )}
             </div>
-          </div>
+          </motion.div>
 
           {/* Add Funds Button */}
-          <Button variant="outline" className="w-full" data-testid="button-add-funds">
-            <ExternalLink className="w-4 h-4 mr-2" />
-            How to Add USDC
-          </Button>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <Button
+              variant="outline"
+              className="w-full gradient-card-bg neon-border-cyan hover-lift font-orbitron text-prism-cyan"
+              data-testid="button-add-funds"
+            >
+              <ExternalLink className="w-4 h-4 mr-2" />
+              How to Add USDC
+            </Button>
+          </motion.div>
         </CardContent>
-      </Card>
+      </motion.div>
 
-      {/* Transaction Details Modal */}
-      <Dialog open={!!selectedTx} onOpenChange={() => setSelectedTx(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Transaction Details</DialogTitle>
-            <DialogDescription>Arc Blockchain Transaction</DialogDescription>
-          </DialogHeader>
-          {selectedTx && (
-            <div className="space-y-4">
-              <div>
-                <div className="text-sm font-medium mb-1">Type</div>
-                <div className="text-sm text-muted-foreground capitalize">
-                  {selectedTx.txType.replace(/_/g, " ")}
-                </div>
-              </div>
-              <div>
-                <div className="text-sm font-medium mb-1">Amount</div>
-                <div className="text-2xl font-bold">
-                  ${parseFloat(selectedTx.amountUSDC).toFixed(2)} USDC
-                </div>
-              </div>
-              <div>
-                <div className="text-sm font-medium mb-1">Status</div>
-                <Badge variant={selectedTx.status === "confirmed" ? "default" : "secondary"}>
-                  {selectedTx.status}
-                </Badge>
-              </div>
-              <div>
-                <div className="text-sm font-medium mb-1">Transaction Hash</div>
-                <code className="text-xs bg-muted p-2 rounded block overflow-x-auto">
-                  {selectedTx.txHash}
-                </code>
-              </div>
-              <div>
-                <div className="text-sm font-medium mb-1">Created</div>
-                <div className="text-sm text-muted-foreground">
-                  {new Date(selectedTx.createdAt).toLocaleString()}
-                </div>
-              </div>
-              {selectedTx.confirmedAt && (
-                <div>
-                  <div className="text-sm font-medium mb-1">Confirmed</div>
-                  <div className="text-sm text-muted-foreground">
-                    {new Date(selectedTx.confirmedAt).toLocaleString()}
+      {/* Transaction Details Modal - Neon Apex Style */}
+      <AnimatePresence>
+        {selectedTx && (
+          <Dialog open={!!selectedTx} onOpenChange={() => setSelectedTx(null)}>
+            <DialogContent className="glass-card neon-border-magenta">
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <DialogHeader>
+                  <DialogTitle className="font-orbitron text-neon-magenta text-xl">
+                    Transaction Details
+                  </DialogTitle>
+                  <DialogDescription className="text-gray-400">Arc Blockchain Transaction</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 mt-4">
+                  <div className="glass-panel p-3 rounded-lg">
+                    <div className="text-xs font-medium mb-1 text-prism-cyan">Type</div>
+                    <div className="text-sm text-white capitalize font-medium">
+                      {selectedTx.txType.replace(/_/g, " ")}
+                    </div>
+                  </div>
+                  <div className="glass-panel p-4 rounded-lg gradient-card-bg neon-border-cyan">
+                    <div className="text-xs font-medium mb-2 text-prism-cyan">Amount</div>
+                    <div className="text-3xl font-orbitron font-bold text-white" style={{ textShadow: '0 0 15px hsla(180, 100%, 50%, 0.6)' }}>
+                      ${parseFloat(selectedTx.amountUSDC).toFixed(2)} USDC
+                    </div>
+                  </div>
+                  <div className="glass-panel p-3 rounded-lg">
+                    <div className="text-xs font-medium mb-2 text-prism-cyan">Status</div>
+                    <Badge className={`stat-badge ${selectedTx.status === "confirmed" ? "text-prism-cyan border-prism-cyan" : "text-neon-magenta border-neon-magenta"}`}>
+                      {selectedTx.status}
+                    </Badge>
+                  </div>
+                  <div className="glass-panel p-3 rounded-lg">
+                    <div className="text-xs font-medium mb-2 text-prism-cyan">Transaction Hash</div>
+                    <code className="text-xs font-code glass-panel p-2 rounded block overflow-x-auto text-gray-300">
+                      {selectedTx.txHash}
+                    </code>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="glass-panel p-3 rounded-lg">
+                      <div className="text-xs font-medium mb-1 text-prism-cyan">Created</div>
+                      <div className="text-xs text-gray-300">
+                        {new Date(selectedTx.createdAt).toLocaleString()}
+                      </div>
+                    </div>
+                    {selectedTx.confirmedAt && (
+                      <div className="glass-panel p-3 rounded-lg">
+                        <div className="text-xs font-medium mb-1 text-prism-cyan">Confirmed</div>
+                        <div className="text-xs text-gray-300">
+                          {new Date(selectedTx.confirmedAt).toLocaleString()}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+              </motion.div>
+            </DialogContent>
+          </Dialog>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

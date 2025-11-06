@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { Loader2, Zap, Crown } from 'lucide-react';
+import { Loader2, Zap, Crown, Check } from 'lucide-react';
+import { motion } from 'framer-motion';
+
 const subscribeImage = "/images/Premium_subscription_interface_c2661c50.png";
 
-// Make Stripe optional - only load if public key is available
 const stripePromise: Promise<Stripe | null> | null = import.meta.env.VITE_STRIPE_PUBLIC_KEY
   ? loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY)
   : null;
@@ -28,7 +29,6 @@ function PaymentForm({ tier, paymentMethod, purchaseType, battleCount }: Payment
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentSent, setPaymentSent] = useState(false);
 
-  // Simplified CashApp flow - direct payment instructions
   if (paymentMethod === 'cashapp') {
     const amount = purchaseType === 'battles' 
       ? (battleCount === 1500 ? '$100.00' : '$1.00')
@@ -46,20 +46,25 @@ function PaymentForm({ tier, paymentMethod, purchaseType, battleCount }: Payment
     };
 
     return (
-      <div className="space-y-6">
-        <div className="bg-green-900/20 border border-green-500/50 rounded-lg p-6 text-center">
-          <h3 className="text-green-400 font-semibold text-lg mb-4">💰 CashApp Payment</h3>
+      <motion.div 
+        className="space-y-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="glass-panel neon-border-cyan rounded-lg p-6 text-center">
+          <h3 className="text-prism-cyan font-orbitron font-semibold text-lg mb-4">💰 CASHAPP PAYMENT</h3>
           <div className="space-y-3">
             <p className="text-white text-xl font-bold">Send {amount} to:</p>
-            <div className="bg-black/30 rounded-lg p-4">
-              <p className="text-green-400 text-2xl font-mono">$ILLAITHEGPTSTORE</p>
+            <div className="glass-card neon-border-magenta p-4 glow-pulse-magenta">
+              <p className="text-neon-magenta text-2xl font-mono font-bold">$ILLAITHEGPTSTORE</p>
             </div>
             <p className="text-gray-300 text-sm">Note: {description}</p>
           </div>
         </div>
         
-        <div className="bg-blue-900/20 border border-blue-500/50 rounded-lg p-4">
-          <p className="text-blue-300 text-sm">
+        <div className="glass-panel rounded-lg p-4">
+          <p className="text-prism-cyan text-sm">
             ✅ Your subscription will be activated automatically within 5-10 minutes after payment.
           </p>
         </div>
@@ -67,7 +72,7 @@ function PaymentForm({ tier, paymentMethod, purchaseType, battleCount }: Payment
         <Button 
           onClick={handleCashAppPayment}
           disabled={paymentSent}
-          className="w-full bg-green-600 hover:bg-green-700 text-white"
+          className="w-full gradient-primary-bg hover-lift text-white font-bold"
           data-testid="button-cashapp-confirm"
         >
           {paymentSent ? (
@@ -78,11 +83,10 @@ function PaymentForm({ tier, paymentMethod, purchaseType, battleCount }: Payment
             `✉️ I've Sent ${amount} via CashApp`
           )}
         </Button>
-      </div>
+      </motion.div>
     );
   }
 
-  // Regular Stripe payment flow
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -128,7 +132,13 @@ function PaymentForm({ tier, paymentMethod, purchaseType, battleCount }: Payment
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <motion.form 
+      onSubmit={handleSubmit} 
+      className="space-y-6"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
       <PaymentElement 
         options={{
           defaultValues: {
@@ -142,7 +152,7 @@ function PaymentForm({ tier, paymentMethod, purchaseType, battleCount }: Payment
       <Button 
         type="submit" 
         disabled={!stripe || isProcessing}
-        className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+        className="w-full gradient-primary-bg neon-border-cyan hover-lift font-bold text-lg"
         data-testid="button-submit-payment"
       >
         {isProcessing ? (
@@ -156,7 +166,7 @@ function PaymentForm({ tier, paymentMethod, purchaseType, battleCount }: Payment
             `Subscribe to ${tier === 'premium' ? 'Premium' : 'Pro'} - $${tier === 'premium' ? '9.99' : '19.99'}/month`
         )}
       </Button>
-    </form>
+    </motion.form>
   );
 }
 
@@ -198,7 +208,6 @@ export default function Subscribe() {
 
   const createBattlePack = useMutation({
     mutationFn: async (params: { battleCount: number }) => {
-      // Use new purchase-battles endpoint that supports multiple package sizes
       const response = await apiRequest('POST', '/api/purchase-battles', {
         battleCount: params.battleCount,
         paymentMethod: paymentMethod
@@ -235,7 +244,7 @@ export default function Subscribe() {
     setPurchaseType(type);
     setClientSecret('');
     if (type === 'battles') {
-      createBattlePack.mutate({ battleCount: 10 }); // Default to 10 battles
+      createBattlePack.mutate({ battleCount: 10 });
     } else {
       createSubscription.mutate({ tier, paymentMethod });
     }
@@ -253,33 +262,50 @@ export default function Subscribe() {
 
   if (!clientSecret) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black flex items-center justify-center p-4 relative">
-        {/* Subscribe Background */}
+      <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+        {/* Animated Neon Apex Background */}
+        <div className="fixed inset-0 pointer-events-none opacity-20">
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#8b5cf640_1px,transparent_1px),linear-gradient(to_bottom,#8b5cf640_1px,transparent_1px)] bg-[size:64px_64px] animate-slow-pulse"></div>
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-prism-cyan rounded-full blur-3xl opacity-10 animate-slow-pulse"></div>
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-neon-magenta rounded-full blur-3xl opacity-10 animate-slow-pulse" style={{ animationDelay: '1s' }}></div>
+        </div>
+
         <div 
-          className="fixed inset-0 bg-cover bg-center bg-no-repeat opacity-12 z-0 pointer-events-none"
+          className="fixed inset-0 bg-cover bg-center bg-no-repeat opacity-5 z-0 pointer-events-none"
           style={{ backgroundImage: `url(${subscribeImage})` }}
         />
-        <div className="relative z-10 max-w-4xl mx-auto">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-white mb-4">
-              Choose Your Plan
+        
+        <div className="relative z-10 max-w-6xl mx-auto w-full">
+          <motion.div 
+            className="text-center mb-12"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <h1 className="text-5xl font-orbitron font-bold text-white mb-4">
+              Choose Your <span className="text-neon-magenta">Battle Plan</span>
             </h1>
-            <p className="text-gray-400 text-lg">
+            <p className="text-gray-300 text-xl">
               Upgrade to unlock unlimited rap battles and premium features
             </p>
-          </div>
+          </motion.div>
 
           {/* Purchase Type Selection */}
-          <div className="mb-8">
-            <h2 className="text-2xl font-semibold text-white mb-4 text-center">Choose Purchase Type</h2>
-            <div className="flex justify-center gap-4">
+          <motion.div 
+            className="mb-10"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+          >
+            <h2 className="text-2xl font-orbitron font-semibold text-white mb-6 text-center">Choose Purchase Type</h2>
+            <div className="flex justify-center gap-4 flex-wrap">
               <Button
                 variant={purchaseType === 'subscription' ? 'default' : 'outline'}
                 onClick={() => handlePurchaseTypeChange('subscription')}
-                className={`px-6 py-3 ${
+                className={`px-8 py-6 text-lg font-bold ${
                   purchaseType === 'subscription'
-                    ? 'bg-purple-600 hover:bg-purple-700 text-white'
-                    : 'border-purple-500 text-purple-400 hover:bg-purple-600/20'
+                    ? 'gradient-primary-bg neon-border-magenta hover-lift'
+                    : 'glass-panel border-2 border-neon-magenta/50 text-neon-magenta hover:border-neon-magenta hover-lift'
                 }`}
                 data-testid="button-select-subscription"
               >
@@ -288,30 +314,35 @@ export default function Subscribe() {
               <Button
                 variant={purchaseType === 'battles' ? 'default' : 'outline'}
                 onClick={() => handlePurchaseTypeChange('battles')}
-                className={`px-6 py-3 ${
+                className={`px-8 py-6 text-lg font-bold ${
                   purchaseType === 'battles'
-                    ? 'bg-amber-600 hover:bg-amber-700 text-white'
-                    : 'border-amber-500 text-amber-400 hover:bg-amber-600/20'
+                    ? 'gradient-primary-bg neon-border-cyan hover-lift'
+                    : 'glass-panel border-2 border-prism-cyan/50 text-prism-cyan hover:border-prism-cyan hover-lift'
                 }`}
                 data-testid="button-select-battles"
               >
-                <Zap className="mr-2 h-4 w-4" />
+                <Zap className="mr-2 h-5 w-5" />
                 10 Battles for $1
               </Button>
             </div>
-          </div>
+          </motion.div>
 
           {/* Payment Method Selection */}
-          <div className="mb-8">
-            <h2 className="text-2xl font-semibold text-white mb-4 text-center">Choose Payment Method</h2>
-            <div className="flex justify-center gap-4">
+          <motion.div 
+            className="mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <h2 className="text-2xl font-orbitron font-semibold text-white mb-6 text-center">Choose Payment Method</h2>
+            <div className="flex justify-center gap-4 flex-wrap">
               <Button
                 variant={paymentMethod === 'stripe' ? 'default' : 'outline'}
                 onClick={() => handlePaymentMethodChange('stripe')}
-                className={`px-6 py-3 ${
+                className={`px-8 py-6 text-lg font-bold ${
                   paymentMethod === 'stripe'
-                    ? 'bg-purple-600 hover:bg-purple-700 text-white'
-                    : 'border-purple-500 text-purple-400 hover:bg-purple-600/20'
+                    ? 'gradient-primary-bg neon-border-magenta hover-lift'
+                    : 'glass-panel border-2 border-neon-magenta/50 text-neon-magenta hover:border-neon-magenta hover-lift'
                 }`}
                 data-testid="button-select-stripe"
               >
@@ -320,189 +351,282 @@ export default function Subscribe() {
               <Button
                 variant={paymentMethod === 'cashapp' ? 'default' : 'outline'}
                 onClick={() => handlePaymentMethodChange('cashapp')}
-                className={`px-6 py-3 ${
+                className={`px-8 py-6 text-lg font-bold ${
                   paymentMethod === 'cashapp'
-                    ? 'bg-green-600 hover:bg-green-700 text-white'
-                    : 'border-green-500 text-green-400 hover:bg-green-600/20'
+                    ? 'bg-green-600 hover:bg-green-700 border-2 border-green-400 hover-lift'
+                    : 'glass-panel border-2 border-green-500/50 text-green-400 hover:border-green-500 hover-lift'
                 }`}
                 data-testid="button-select-cashapp"
               >
                 💰 Cash App ($ILLAITHEGPTSTORE)
               </Button>
             </div>
-          </div>
+          </motion.div>
 
           {purchaseType === 'battles' ? (
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
               {/* Starter Pack */}
-              <Card className="bg-gray-800 border-blue-500/50 hover:border-blue-400 transition-colors">
-                <CardHeader className="text-center">
-                  <CardTitle className="text-blue-400 text-2xl flex items-center justify-center">
-                    <Zap className="mr-2 h-6 w-6" />
-                    Starter Pack
-                  </CardTitle>
-                  <CardDescription className="text-gray-300">
-                    Perfect for trying out the game
-                  </CardDescription>
-                  <div className="text-3xl font-bold text-white">
-                    $1.00<span className="text-lg text-gray-400"> for 10 battles</span>
-                  </div>
-                  <p className="text-sm text-gray-400">$0.10 per battle</p>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <ul className="space-y-2 text-gray-300 text-center">
-                    <li>⚡ 10 instant battles</li>
-                    <li>🤖 All AI characters</li>
-                    <li>💳 One-time payment</li>
-                    <li>🚀 No subscription needed</li>
-                  </ul>
-                  <Button
-                    onClick={() => createBattlePack.mutate({ battleCount: 10 })}
-                    disabled={createBattlePack.isPending}
-                    className="w-full bg-blue-600 hover:bg-blue-700"
-                    data-testid="button-purchase-battles-10"
-                  >
-                    {createBattlePack.isPending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Setting up...
-                      </>
-                    ) : (
-                      'Buy 10 Battles for $1'
-                    )}
-                  </Button>
-                </CardContent>
-              </Card>
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+              >
+                <Card className="glass-panel neon-border-cyan text-white h-full hover-lift">
+                  <CardHeader className="text-center pb-6">
+                    <CardTitle className="text-prism-cyan text-3xl font-orbitron flex items-center justify-center gap-2">
+                      <Zap className="h-7 w-7" />
+                      Starter Pack
+                    </CardTitle>
+                    <CardDescription className="text-gray-300 text-base">
+                      Perfect for trying out the game
+                    </CardDescription>
+                    <div className="text-4xl font-orbitron font-bold text-white mt-4">
+                      $1.00<span className="text-lg text-gray-400"> for 10 battles</span>
+                    </div>
+                    <p className="text-sm text-gray-400">$0.10 per battle</p>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <ul className="space-y-3 text-gray-200">
+                      <li className="flex items-center gap-2">
+                        <Check className="h-4 w-4 text-neon-magenta" />
+                        <span className="stat-badge">⚡ 10 instant battles</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="h-4 w-4 text-neon-magenta" />
+                        <span>🤖 All AI characters</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="h-4 w-4 text-neon-magenta" />
+                        <span>💳 One-time payment</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="h-4 w-4 text-neon-magenta" />
+                        <span>🚀 No subscription needed</span>
+                      </li>
+                    </ul>
+                    <Button
+                      onClick={() => createBattlePack.mutate({ battleCount: 10 })}
+                      disabled={createBattlePack.isPending}
+                      className="w-full gradient-primary-bg neon-border-cyan hover-lift font-bold text-lg py-6"
+                      data-testid="button-purchase-battles-10"
+                    >
+                      {createBattlePack.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                          Setting up...
+                        </>
+                      ) : (
+                        'Buy 10 Battles for $1'
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
 
               {/* Mega Bundle */}
-              <Card className="bg-gray-800 border-amber-500/50 hover:border-amber-400 transition-colors relative">
-                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                  <span className="bg-amber-500 text-black px-3 py-1 rounded-full text-sm font-semibold">
-                    MEGA VALUE
-                  </span>
-                </div>
-                <CardHeader className="text-center">
-                  <CardTitle className="text-amber-400 text-2xl flex items-center justify-center">
-                    <Crown className="mr-2 h-6 w-6" />
-                    Mega Bundle
-                  </CardTitle>
-                  <CardDescription className="text-gray-300">
-                    Massive savings for serious battlers
-                  </CardDescription>
-                  <div className="text-3xl font-bold text-white">
-                    $100.00<span className="text-lg text-gray-400"> for 1,500 battles</span>
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+              >
+                <Card className="glass-card gradient-card-bg neon-border-magenta text-white h-full transform scale-105 glow-pulse-magenta relative">
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
+                    <span className="stat-badge bg-gradient-primary-bg text-white px-4 py-1.5 text-sm font-bold">
+                      MEGA VALUE
+                    </span>
                   </div>
-                  <p className="text-sm text-green-400 font-semibold">Only $0.067 per battle!</p>
-                  <p className="text-xs text-gray-400">Save $50 vs individual packs</p>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <ul className="space-y-2 text-gray-300 text-center">
-                    <li>🔥 1,500 epic battles</li>
-                    <li>🤖 All AI characters</li>
-                    <li>💰 15 battles per dollar</li>
-                    <li>💳 One-time payment</li>
-                    <li>🎯 Best value option</li>
-                  </ul>
-                  <Button
-                    onClick={() => createBattlePack.mutate({ battleCount: 1500 })}
-                    disabled={createBattlePack.isPending}
-                    className="w-full bg-amber-600 hover:bg-amber-700"
-                    data-testid="button-purchase-battles-1500"
-                  >
-                    {createBattlePack.isPending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Setting up...
-                      </>
-                    ) : (
-                      'Buy 1,500 Battles for $100'
-                    )}
-                  </Button>
-                </CardContent>
-              </Card>
+                  <CardHeader className="text-center pb-6">
+                    <CardTitle className="text-neon-magenta text-3xl font-orbitron flex items-center justify-center gap-2">
+                      <Crown className="h-7 w-7" />
+                      Mega Bundle
+                    </CardTitle>
+                    <CardDescription className="text-gray-200 text-base font-semibold">
+                      Massive savings for serious battlers
+                    </CardDescription>
+                    <div className="text-4xl font-orbitron font-bold text-white mt-4">
+                      $100.00<span className="text-lg text-gray-300"> for 1,500 battles</span>
+                    </div>
+                    <p className="text-sm text-green-400 font-semibold">Only $0.067 per battle!</p>
+                    <p className="text-xs text-gray-400">Save $50 vs individual packs</p>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <ul className="space-y-3 text-gray-100">
+                      <li className="flex items-center gap-2">
+                        <Check className="h-4 w-4 text-neon-magenta" />
+                        <span className="stat-badge">🔥 1,500 epic battles</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="h-4 w-4 text-neon-magenta" />
+                        <span>🤖 All AI characters</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="h-4 w-4 text-neon-magenta" />
+                        <span>💰 15 battles per dollar</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="h-4 w-4 text-neon-magenta" />
+                        <span>💳 One-time payment</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="h-4 w-4 text-neon-magenta" />
+                        <span>🎯 Best value option</span>
+                      </li>
+                    </ul>
+                    <Button
+                      onClick={() => createBattlePack.mutate({ battleCount: 1500 })}
+                      disabled={createBattlePack.isPending}
+                      className="w-full gradient-primary-bg neon-border-cyan hover-lift font-bold text-lg py-6"
+                      data-testid="button-purchase-battles-1500"
+                    >
+                      {createBattlePack.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                          Setting up...
+                        </>
+                      ) : (
+                        'Buy 1,500 Battles for $100'
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
             </div>
           ) : (
-            <div className="grid md:grid-cols-2 gap-6">
-            {/* Premium Plan */}
-            <Card className="bg-gray-800 border-purple-500/50 hover:border-purple-400 transition-colors">
-              <CardHeader>
-                <CardTitle className="text-purple-400 text-2xl">Premium</CardTitle>
-                <CardDescription className="text-gray-300">
-                  Perfect for regular battlers
-                </CardDescription>
-                <div className="text-3xl font-bold text-white">
-                  $9.99<span className="text-lg text-gray-400">/month</span>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <ul className="space-y-2 text-gray-300">
-                  <li>✓ 25 battles per day</li>
-                  <li>✓ All AI characters</li>
-                  <li>✓ Tournament mode</li>
-                  <li>✓ Advanced scoring</li>
-                  <li>✓ Lyric analysis</li>
-                </ul>
-                <Button
-                  onClick={() => handleTierSelect('premium')}
-                  disabled={createSubscription.isPending}
-                  className="w-full bg-purple-600 hover:bg-purple-700"
-                  data-testid="button-select-premium"
-                >
-                  {createSubscription.isPending && tier === 'premium' ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Setting up...
-                    </>
-                  ) : (
-                    'Choose Premium'
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+              {/* Premium Plan */}
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+              >
+                <Card className="glass-card gradient-card-bg neon-border-magenta text-white h-full transform scale-105 glow-pulse-magenta">
+                  <CardHeader className="pb-6">
+                    <CardTitle className="text-neon-magenta text-3xl font-orbitron flex items-center gap-2">
+                      <Zap className="h-7 w-7" />
+                      Premium
+                    </CardTitle>
+                    <CardDescription className="text-gray-200 text-base font-semibold">
+                      Perfect for regular battlers
+                    </CardDescription>
+                    <div className="text-4xl font-orbitron font-bold text-white mt-4">
+                      $9.99<span className="text-lg text-gray-300">/month</span>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <ul className="space-y-3 text-gray-100">
+                      <li className="flex items-center gap-2">
+                        <Check className="h-4 w-4 text-neon-magenta" />
+                        <span className="stat-badge">25 battles per day</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="h-4 w-4 text-neon-magenta" />
+                        <span>All AI characters</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="h-4 w-4 text-neon-magenta" />
+                        <span>Tournament mode</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="h-4 w-4 text-neon-magenta" />
+                        <span>Advanced scoring</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="h-4 w-4 text-neon-magenta" />
+                        <span>Lyric analysis</span>
+                      </li>
+                    </ul>
+                    <Button
+                      onClick={() => handleTierSelect('premium')}
+                      disabled={createSubscription.isPending}
+                      className="w-full gradient-primary-bg neon-border-cyan hover-lift font-bold text-lg py-6"
+                      data-testid="button-select-premium"
+                    >
+                      {createSubscription.isPending && tier === 'premium' ? (
+                        <>
+                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                          Setting up...
+                        </>
+                      ) : (
+                        'Choose Premium'
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
 
-            {/* Pro Plan */}
-            <Card className="bg-gray-800 border-amber-500/50 hover:border-amber-400 transition-colors relative">
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <span className="bg-amber-500 text-black px-3 py-1 rounded-full text-sm font-semibold">
-                  BEST VALUE
-                </span>
-              </div>
-              <CardHeader>
-                <CardTitle className="text-amber-400 text-2xl">Pro</CardTitle>
-                <CardDescription className="text-gray-300">
-                  For serious rap battle champions
-                </CardDescription>
-                <div className="text-3xl font-bold text-white">
-                  $19.99<span className="text-lg text-gray-400">/month</span>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <ul className="space-y-2 text-gray-300">
-                  <li>✓ Unlimited battles</li>
-                  <li>✓ All AI characters</li>
-                  <li>✓ Tournament mode</li>
-                  <li>✓ Advanced scoring</li>
-                  <li>✓ Lyric analysis</li>
-                  <li>✓ Priority support</li>
-                  <li>✓ Early access features</li>
-                </ul>
-                <Button
-                  onClick={() => handleTierSelect('pro')}
-                  disabled={createSubscription.isPending}
-                  className="w-full bg-amber-600 hover:bg-amber-700"
-                  data-testid="button-select-pro"
-                >
-                  {createSubscription.isPending && tier === 'pro' ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Setting up...
-                    </>
-                  ) : (
-                    'Choose Pro'
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
+              {/* Pro Plan */}
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+              >
+                <Card className="glass-panel neon-border-cyan text-white h-full hover-lift glow-pulse-cyan relative">
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
+                    <span className="stat-badge bg-gradient-primary-bg text-white px-4 py-1.5 text-sm font-bold">
+                      BEST VALUE
+                    </span>
+                  </div>
+                  <CardHeader className="pb-6">
+                    <CardTitle className="text-prism-cyan text-3xl font-orbitron flex items-center gap-2">
+                      <Crown className="h-7 w-7" />
+                      Pro
+                    </CardTitle>
+                    <CardDescription className="text-gray-200 text-base font-semibold">
+                      For serious rap battle champions
+                    </CardDescription>
+                    <div className="text-4xl font-orbitron font-bold text-white mt-4">
+                      $19.99<span className="text-lg text-gray-300">/month</span>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <ul className="space-y-3 text-gray-100">
+                      <li className="flex items-center gap-2">
+                        <Check className="h-4 w-4 text-prism-cyan" />
+                        <span className="stat-badge">Unlimited battles</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="h-4 w-4 text-prism-cyan" />
+                        <span>All AI characters</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="h-4 w-4 text-prism-cyan" />
+                        <span>Tournament mode</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="h-4 w-4 text-prism-cyan" />
+                        <span>Advanced scoring</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="h-4 w-4 text-prism-cyan" />
+                        <span>Lyric analysis</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="h-4 w-4 text-prism-cyan" />
+                        <span>Priority support</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="h-4 w-4 text-prism-cyan" />
+                        <span>Early access features</span>
+                      </li>
+                    </ul>
+                    <Button
+                      onClick={() => handleTierSelect('pro')}
+                      disabled={createSubscription.isPending}
+                      className="w-full gradient-primary-bg neon-border-magenta hover-lift font-bold text-lg py-6"
+                      data-testid="button-select-pro"
+                    >
+                      {createSubscription.isPending && tier === 'pro' ? (
+                        <>
+                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                          Setting up...
+                        </>
+                      ) : (
+                        'Choose Pro'
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
             </div>
           )}
         </div>
@@ -515,8 +639,8 @@ export default function Subscribe() {
     appearance: {
       theme: 'night' as const,
       variables: {
-        colorPrimary: '#8b5cf6',
-        colorBackground: '#1f2937',
+        colorPrimary: '#ff00ff',
+        colorBackground: '#0a0a0a',
         colorText: '#ffffff',
         colorDanger: '#ef4444',
         fontFamily: 'Inter, system-ui, sans-serif',
@@ -527,34 +651,61 @@ export default function Subscribe() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-gray-800 border-purple-500/50">
-        <CardHeader>
-          <CardTitle className="text-white text-2xl text-center">
-            Complete Your Subscription
-          </CardTitle>
-          <CardDescription className="text-gray-400 text-center">
-            {tier === 'premium' ? 'Premium Plan - $9.99/month' : 'Pro Plan - $19.99/month'}
-          </CardDescription>
-          <div className="text-center mt-2">
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-              {paymentMethod === 'cashapp' ? '💰 Cash App → $ILLAITHEGPTSTORE' : '💳 Credit Card Payment'}
-            </span>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {stripePromise ? (
-            <Elements stripe={stripePromise} options={stripeOptions}>
-              <PaymentForm tier={tier} paymentMethod={paymentMethod} purchaseType={purchaseType} battleCount={purchaseType === 'battles' ? 4 : undefined} />
-            </Elements>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-yellow-400 mb-4">Payment processing is currently unavailable.</p>
-              <p className="text-gray-400 text-sm">Please contact support or try CashApp payment option.</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Animated Neon Apex Background */}
+      <div className="fixed inset-0 pointer-events-none opacity-20">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#8b5cf640_1px,transparent_1px),linear-gradient(to_bottom,#8b5cf640_1px,transparent_1px)] bg-[size:64px_64px] animate-slow-pulse"></div>
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-prism-cyan rounded-full blur-3xl opacity-10 animate-slow-pulse"></div>
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-neon-magenta rounded-full blur-3xl opacity-10 animate-slow-pulse" style={{ animationDelay: '1s' }}></div>
+      </div>
+
+      <motion.div
+        className="w-full max-w-md relative z-10"
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        <Card className="glass-card neon-border-magenta glow-pulse-magenta">
+          <CardHeader className="text-center pb-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <CardTitle className="text-white text-3xl font-orbitron font-bold mb-2">
+                COMPLETE YOUR {purchaseType === 'battles' ? 'PURCHASE' : 'SUBSCRIPTION'}
+              </CardTitle>
+              <CardDescription className="text-gray-200 text-base font-semibold">
+                {purchaseType === 'battles' 
+                  ? '10 Battle Pack - $1.00'
+                  : (tier === 'premium' ? 'Premium Plan - $9.99/month' : 'Pro Plan - $19.99/month')}
+              </CardDescription>
+              <div className="mt-3">
+                <span className="stat-badge">
+                  {paymentMethod === 'cashapp' ? '💰 Cash App → $ILLAITHEGPTSTORE' : '💳 Credit Card Payment'}
+                </span>
+              </div>
+            </motion.div>
+          </CardHeader>
+          <CardContent>
+            {stripePromise ? (
+              <Elements stripe={stripePromise} options={stripeOptions}>
+                <PaymentForm tier={tier} paymentMethod={paymentMethod} purchaseType={purchaseType} battleCount={purchaseType === 'battles' ? 10 : undefined} />
+              </Elements>
+            ) : (
+              <motion.div 
+                className="text-center py-8 glass-panel rounded-lg"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5 }}
+              >
+                <p className="text-yellow-400 mb-4 font-semibold">Payment processing is currently unavailable.</p>
+                <p className="text-gray-300 text-sm">Please contact support or try CashApp payment option.</p>
+              </motion.div>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
   );
 }

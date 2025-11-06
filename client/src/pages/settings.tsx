@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -14,203 +15,313 @@ export default function SettingsPage() {
     "https://rapbots.online/settings"
   );
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.5, ease: "easeOut" }
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4 relative" data-testid="page-settings">
+    <div className="min-h-screen bg-gradient-to-br from-void-deep via-primary-dark to-steel-gray p-4 relative" data-testid="page-settings">
       <SEO
         title="Settings - Configure Your Battle Rap AI Experience"
         description="Customize your rap battle settings, manage API keys for TTS services, and configure battle preferences for optimal performance."
         keywords={['settings', 'API keys', 'TTS configuration', 'battle settings', 'account management']}
         structuredData={structuredData}
       />
+      
       {/* Settings Background */}
       <div 
-        className="fixed inset-0 bg-cover bg-center bg-no-repeat opacity-12 z-0 pointer-events-none"
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat opacity-8 z-0 pointer-events-none"
         style={{ backgroundImage: `url(${settingsImage})` }}
       />
-      <div className="relative z-10 max-w-6xl mx-auto space-y-6">
+      
+      {/* Animated background glow effects */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-neon-magenta opacity-10 rounded-full blur-3xl animate-slow-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-prism-cyan opacity-10 rounded-full blur-3xl animate-slow-pulse" style={{ animationDelay: '1s' }} />
+      </div>
+
+      <motion.div
+        className="relative z-10 max-w-6xl mx-auto space-y-8"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
         {/* Header */}
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-white mb-2 flex items-center justify-center gap-3">
-            <Settings2 className="w-8 h-8" />
-            Settings
-          </h1>
-          <p className="text-gray-300">
+        <motion.div
+          variants={itemVariants}
+          className="glass-card neon-border-magenta p-8 text-center"
+        >
+          <div className="flex items-center justify-center gap-4 mb-3">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            >
+              <Settings2 className="w-10 h-10 text-neon-magenta" />
+            </motion.div>
+            <h1 className="text-5xl font-orbitron font-bold text-neon-magenta tracking-wider">
+              SETTINGS
+            </h1>
+            <motion.div
+              animate={{ rotate: -360 }}
+              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            >
+              <Settings2 className="w-10 h-10 text-prism-cyan" />
+            </motion.div>
+          </div>
+          <p className="text-gray-300 font-code">
             Customize your rap battle experience and manage your API keys
           </p>
-        </div>
+        </motion.div>
 
         {/* Settings Tabs */}
-        <Tabs defaultValue="tts" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-gray-800 border-gray-700">
-            <TabsTrigger value="tts" className="data-[state=active]:bg-purple-600">
-              <Mic className="w-4 h-4 mr-2" />
-              TTS Services
-            </TabsTrigger>
-            <TabsTrigger value="battle" className="data-[state=active]:bg-purple-600">
-              <Shield className="w-4 h-4 mr-2" />
-              Battle Settings
-            </TabsTrigger>
-            <TabsTrigger value="account" className="data-[state=active]:bg-purple-600">
-              <Key className="w-4 h-4 mr-2" />
-              Account
-            </TabsTrigger>
-          </TabsList>
+        <motion.div variants={itemVariants}>
+          <Tabs defaultValue="tts" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 glass-panel p-2 gap-2 border-2 border-transparent">
+              <TabsTrigger 
+                value="tts" 
+                className="data-[state=active]:gradient-primary-bg data-[state=active]:neon-border-cyan transition-all duration-300"
+              >
+                <Mic className="w-4 h-4 mr-2" />
+                TTS Services
+              </TabsTrigger>
+              <TabsTrigger 
+                value="battle" 
+                className="data-[state=active]:gradient-primary-bg data-[state=active]:neon-border-cyan transition-all duration-300"
+              >
+                <Shield className="w-4 h-4 mr-2" />
+                Battle Settings
+              </TabsTrigger>
+              <TabsTrigger 
+                value="account" 
+                className="data-[state=active]:gradient-primary-bg data-[state=active]:neon-border-cyan transition-all duration-300"
+              >
+                <Key className="w-4 h-4 mr-2" />
+                Account
+              </TabsTrigger>
+            </TabsList>
 
-          {/* TTS Services Tab */}
-          <TabsContent value="tts" className="space-y-6">
-            <APIKeyManager />
-            
-            <Card className="bg-gray-800 border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Mic className="w-5 h-5" />
-                  TTS Service Comparison
-                </CardTitle>
-                <CardDescription className="text-gray-300">
-                  Compare different text-to-speech services for your rap battles
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Card className="bg-gray-700">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-lg text-white">System (Default)</CardTitle>
-                      <Badge variant="secondary">Always Available</Badge>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      <p className="text-sm text-gray-300">
-                        <strong>Bark TTS + Typecast</strong><br/>
-                        Uses admin-managed keys
-                      </p>
-                      <div className="text-xs text-gray-400">
-                        <p>✓ Always works</p>
-                        <p>✗ Slower generation</p>
-                        <p>✗ Limited voice options</p>
+            {/* TTS Services Tab */}
+            <TabsContent value="tts" className="space-y-6 mt-6">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <APIKeyManager />
+              </motion.div>
+              
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+              >
+                <div className="glass-panel p-8 rounded-xl">
+                  <div className="neon-border-cyan rounded-lg p-4 mb-6">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Mic className="w-5 h-5 text-prism-cyan" />
+                      <h3 className="text-xl font-orbitron font-bold text-white">TTS Service Comparison</h3>
+                    </div>
+                    <p className="text-gray-300 text-sm">
+                      Compare different text-to-speech services for your rap battles
+                    </p>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* System Provider */}
+                    <motion.div
+                      whileHover={{ scale: 1.02 }}
+                      className="glass-panel p-6 rounded-xl hover-lift border border-gray-700"
+                    >
+                      <div className="mb-4">
+                        <h4 className="text-lg font-orbitron text-white mb-2">System (Default)</h4>
+                        <span className="stat-badge text-gray-300">Always Available</span>
                       </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="bg-gray-700 border-blue-500">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-lg text-white">OpenAI TTS</CardTitle>
-                      <Badge className="bg-blue-600">Latest 2025</Badge>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      <p className="text-sm text-gray-300">
-                        <strong>gpt-4o-mini-tts</strong><br/>
-                        With "steerability" features
-                      </p>
-                      <div className="text-xs text-gray-400">
-                        <p>✓ Authentic rapper voices</p>
-                        <p>✓ Emotion control</p>
-                        <p>✓ High quality audio</p>
-                        <p>💰 ~$0.015 per minute</p>
+                      <div className="space-y-3">
+                        <p className="text-sm text-gray-300">
+                          <strong className="text-white">Bark TTS + Typecast</strong><br/>
+                          Uses admin-managed keys
+                        </p>
+                        <div className="text-xs text-gray-400 space-y-1">
+                          <p className="flex items-center gap-2">
+                            <span className="text-matrix-green">✓</span> Always works
+                          </p>
+                          <p className="flex items-center gap-2">
+                            <span className="text-cyber-red">✗</span> Slower generation
+                          </p>
+                          <p className="flex items-center gap-2">
+                            <span className="text-cyber-red">✗</span> Limited voice options
+                          </p>
+                        </div>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </motion.div>
 
-                  <Card className="bg-gray-700 border-green-500">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-lg text-white">Groq TTS</CardTitle>
-                      <Badge className="bg-green-600">Ultra Fast</Badge>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      <p className="text-sm text-gray-300">
-                        <strong>PlayAI Models</strong><br/>
-                        10x faster than real-time
-                      </p>
-                      <div className="text-xs text-gray-400">
-                        <p>✓ Lightning fast</p>
-                        <p>✓ Multiple voices</p>
-                        <p>✓ Perfect for battles</p>
-                        <p>💰 $50 per 1M characters</p>
+                    {/* OpenAI Provider */}
+                    <motion.div
+                      whileHover={{ scale: 1.02 }}
+                      className="glass-panel p-6 rounded-xl hover-lift neon-border-cyan relative overflow-hidden"
+                    >
+                      <div className="absolute inset-0 gradient-card-bg opacity-30" />
+                      <div className="relative z-10">
+                        <div className="mb-4">
+                          <h4 className="text-lg font-orbitron text-prism-cyan mb-2">OpenAI TTS</h4>
+                          <span className="stat-badge text-prism-cyan border-prism-cyan">Latest 2025</span>
+                        </div>
+                        <div className="space-y-3">
+                          <p className="text-sm text-gray-300">
+                            <strong className="text-white">gpt-4o-mini-tts</strong><br/>
+                            With "steerability" features
+                          </p>
+                          <div className="text-xs text-gray-400 space-y-1">
+                            <p className="flex items-center gap-2">
+                              <span className="text-matrix-green">✓</span> Authentic rapper voices
+                            </p>
+                            <p className="flex items-center gap-2">
+                              <span className="text-matrix-green">✓</span> Emotion control
+                            </p>
+                            <p className="flex items-center gap-2">
+                              <span className="text-matrix-green">✓</span> High quality audio
+                            </p>
+                            <p className="flex items-center gap-2 text-toxic-yellow">
+                              💰 ~$0.015 per minute
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                    </motion.div>
 
-          {/* Battle Settings Tab */}
-          <TabsContent value="battle" className="space-y-6">
-            <Card className="bg-gray-800 border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-white">Battle Preferences</CardTitle>
-                <CardDescription className="text-gray-300">
-                  Customize your rap battle experience
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-white font-medium">Profanity Filter</h4>
-                      <p className="text-sm text-gray-400">Filter explicit content in battles</p>
-                    </div>
-                    <Badge variant="outline">Coming Soon</Badge>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-white font-medium">Difficulty Preference</h4>
-                      <p className="text-sm text-gray-400">Default difficulty for new battles</p>
-                    </div>
-                    <Badge variant="outline">Coming Soon</Badge>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-white font-medium">Audio Quality</h4>
-                      <p className="text-sm text-gray-400">Audio generation quality settings</p>
-                    </div>
-                    <Badge variant="outline">Coming Soon</Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Account Tab */}
-          <TabsContent value="account" className="space-y-6">
-            <Card className="bg-gray-800 border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-white">Account Information</CardTitle>
-                <CardDescription className="text-gray-300">
-                  Your account details and preferences
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-white font-medium">Profile Settings</h4>
-                      <p className="text-sm text-gray-400">Update your profile information</p>
-                    </div>
-                    <Badge variant="outline">Coming Soon</Badge>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-white font-medium">Data Export</h4>
-                      <p className="text-sm text-gray-400">Download your battle history and stats</p>
-                    </div>
-                    <Badge variant="outline">Coming Soon</Badge>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-white font-medium">Privacy Settings</h4>
-                      <p className="text-sm text-gray-400">Control your data and privacy preferences</p>
-                    </div>
-                    <Badge variant="outline">Coming Soon</Badge>
+                    {/* Groq Provider */}
+                    <motion.div
+                      whileHover={{ scale: 1.02 }}
+                      className="glass-panel p-6 rounded-xl hover-lift neon-border-magenta relative overflow-hidden"
+                    >
+                      <div className="absolute inset-0 gradient-primary-bg opacity-20" />
+                      <div className="relative z-10">
+                        <div className="mb-4">
+                          <h4 className="text-lg font-orbitron text-neon-magenta mb-2">Groq TTS</h4>
+                          <span className="stat-badge text-matrix-green border-matrix-green">Ultra Fast</span>
+                        </div>
+                        <div className="space-y-3">
+                          <p className="text-sm text-gray-300">
+                            <strong className="text-white">PlayAI Models</strong><br/>
+                            10x faster than real-time
+                          </p>
+                          <div className="text-xs text-gray-400 space-y-1">
+                            <p className="flex items-center gap-2">
+                              <span className="text-matrix-green">✓</span> Lightning fast
+                            </p>
+                            <p className="flex items-center gap-2">
+                              <span className="text-matrix-green">✓</span> Multiple voices
+                            </p>
+                            <p className="flex items-center gap-2">
+                              <span className="text-matrix-green">✓</span> Perfect for battles
+                            </p>
+                            <p className="flex items-center gap-2 text-toxic-yellow">
+                              💰 $50 per 1M characters
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
+              </motion.div>
+            </TabsContent>
+
+            {/* Battle Settings Tab */}
+            <TabsContent value="battle" className="space-y-6 mt-6">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="glass-panel p-8 rounded-xl"
+              >
+                <div className="neon-border-cyan rounded-lg p-4 mb-6">
+                  <h3 className="text-xl font-orbitron font-bold text-white">Battle Preferences</h3>
+                  <p className="text-gray-300 text-sm mt-1">
+                    Customize your rap battle experience
+                  </p>
+                </div>
+                
+                <div className="space-y-6">
+                  {[
+                    { title: 'Profanity Filter', desc: 'Filter explicit content in battles' },
+                    { title: 'Difficulty Preference', desc: 'Default difficulty for new battles' },
+                    { title: 'Audio Quality', desc: 'Audio generation quality settings' }
+                  ].map((setting, index) => (
+                    <motion.div
+                      key={setting.title}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                      className="glass-panel p-4 rounded-lg hover-lift flex items-center justify-between"
+                    >
+                      <div>
+                        <h4 className="text-white font-medium font-orbitron">{setting.title}</h4>
+                        <p className="text-sm text-gray-400">{setting.desc}</p>
+                      </div>
+                      <Badge variant="outline" className="stat-badge">Coming Soon</Badge>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            </TabsContent>
+
+            {/* Account Tab */}
+            <TabsContent value="account" className="space-y-6 mt-6">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="glass-panel p-8 rounded-xl"
+              >
+                <div className="neon-border-cyan rounded-lg p-4 mb-6">
+                  <h3 className="text-xl font-orbitron font-bold text-white">Account Information</h3>
+                  <p className="text-gray-300 text-sm mt-1">
+                    Your account details and preferences
+                  </p>
+                </div>
+                
+                <div className="space-y-6">
+                  {[
+                    { title: 'Profile Settings', desc: 'Update your profile information' },
+                    { title: 'Data Export', desc: 'Download your battle history and stats' },
+                    { title: 'Privacy Settings', desc: 'Control your data and privacy preferences' }
+                  ].map((setting, index) => (
+                    <motion.div
+                      key={setting.title}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                      className="glass-panel p-4 rounded-lg hover-lift flex items-center justify-between"
+                    >
+                      <div>
+                        <h4 className="text-white font-medium font-orbitron">{setting.title}</h4>
+                        <p className="text-sm text-gray-400">{setting.desc}</p>
+                      </div>
+                      <Badge variant="outline" className="stat-badge">Coming Soon</Badge>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            </TabsContent>
+          </Tabs>
+        </motion.div>
+      </motion.div>
     </div>
   );
 }

@@ -50,7 +50,7 @@
   --accent-blue: hsl(195 100% 50%);      /* Keep blue */
   --battle-gray: hsl(0 0% 12%);          /* Darker machine steel */
   
-  /* New evil robot colors */
+  /* NEON APEX Design System - Modern Gaming UI */
   --cyber-red: hsl(0 100% 35%);          /* Deep digital red */
   --matrix-green: hsl(120 100% 25%);     /* Matrix terminal green */
   --electric-blue: hsl(195 100% 35%);    /* Electric circuit blue */
@@ -59,6 +59,29 @@
   --steel-gray: hsl(0 0% 18%);           /* Cold machine steel */
   --plasma-purple: hsl(280 100% 35%);    /* Evil energy plasma */
   --toxic-yellow: hsl(54 100% 40%);      /* Radioactive warning */
+  
+  /* Neon Apex Primary Palette */
+  --neon-magenta: hsl(330 100% 50%);     /* Cyber-magenta primary */
+  --prism-cyan: hsl(180 100% 50%);       /* Prism cyan accent */
+  --void-deep: hsl(0 0% 3%);             /* Deep void base */
+  --glass-overlay: hsla(0 0% 100% / 0.05); /* Glass morphism overlay */
+  
+  /* Neon Apex Gradients */
+  --gradient-primary: linear-gradient(135deg, var(--neon-magenta) 0%, var(--prism-cyan) 100%);
+  --gradient-card: linear-gradient(135deg, hsla(330 100% 50% / 0.1) 0%, hsla(180 100% 50% / 0.1) 100%);
+  --gradient-glow: radial-gradient(circle, hsla(330 100% 50% / 0.3) 0%, transparent 70%);
+  
+  /* Glassmorphism */
+  --glass-bg: hsla(0 0% 12% / 0.6);
+  --glass-border: hsla(0 0% 100% / 0.1);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  
+  /* Modern Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
+  --shadow-glow-cyan: 0 0 20px hsla(180 100% 50% / 0.5);
+  --shadow-glow-magenta: 0 0 20px hsla(330 100% 50% / 0.5);
 }
 
 .dark {
@@ -458,6 +481,90 @@
     touch-action: pan-y;
     -webkit-overflow-scrolling: touch;
   }
+  
+  /* NEON APEX Utility Classes */
+  .glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    border-radius: 16px;
+  }
+  
+  .glass-panel {
+    background: hsla(0 0% 8% / 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid hsla(0 0% 100% / 0.08);
+  }
+  
+  .neon-border-magenta {
+    border: 2px solid var(--neon-magenta);
+    box-shadow: 0 0 20px hsla(330 100% 50% / 0.4), inset 0 0 20px hsla(330 100% 50% / 0.1);
+  }
+  
+  .neon-border-cyan {
+    border: 2px solid var(--prism-cyan);
+    box-shadow: 0 0 20px hsla(180 100% 50% / 0.4), inset 0 0 20px hsla(180 100% 50% / 0.1);
+  }
+  
+  .gradient-primary-bg {
+    background: var(--gradient-primary);
+  }
+  
+  .gradient-card-bg {
+    background: var(--gradient-card);
+  }
+  
+  .hover-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg), var(--shadow-glow-magenta);
+  }
+  
+  .glow-pulse-cyan {
+    animation: glowPulseCyan 3s ease-in-out infinite;
+  }
+  
+  .glow-pulse-magenta {
+    animation: glowPulseMagenta 3s ease-in-out infinite;
+  }
+  
+  @keyframes glowPulseCyan {
+    0%, 100% { box-shadow: 0 0 10px hsla(180 100% 50% / 0.3); }
+    50% { box-shadow: 0 0 30px hsla(180 100% 50% / 0.6), 0 0 60px hsla(180 100% 50% / 0.3); }
+  }
+  
+  @keyframes glowPulseMagenta {
+    0%, 100% { box-shadow: 0 0 10px hsla(330 100% 50% / 0.3); }
+    50% { box-shadow: 0 0 30px hsla(330 100% 50% / 0.6), 0 0 60px hsla(330 100% 50% / 0.3); }
+  }
+  
+  .text-neon-magenta {
+    color: var(--neon-magenta);
+    text-shadow: 0 0 10px hsla(330 100% 50% / 0.5);
+  }
+  
+  .text-prism-cyan {
+    color: var(--prism-cyan);
+    text-shadow: 0 0 10px hsla(180 100% 50% / 0.5);
+  }
+  
+  .stat-badge {
+    background: linear-gradient(135deg, hsla(330 100% 50% / 0.15), hsla(180 100% 50% / 0.15));
+    border: 1px solid hsla(0 0% 100% / 0.1);
+    backdrop-filter: blur(8px);
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+  
   /* Battle Arena Enhancements */
   .bg-gradient-radial {
     background: radial-gradient(circle, var(--tw-gradient-stops));

@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useLocation } from "wouter";
 import { Mic, ArrowLeft, Mail, Lock, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { motion } from "framer-motion";
 
 export default function Login() {
   const [isRegisterMode, setIsRegisterMode] = useState(false);
@@ -50,7 +51,6 @@ export default function Login() {
           title: isRegisterMode ? "Account created!" : "Welcome back!",
           description: isRegisterMode ? "Your account has been created successfully" : "You've been logged in successfully",
         });
-        // Refresh the page to trigger auth check
         setTimeout(() => {
           window.location.href = '/';
         }, 500);
@@ -73,128 +73,181 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-slate-800 border-slate-700">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center">
-              <Mic className="w-8 h-8 text-white" />
-            </div>
-          </div>
-          <CardTitle className="text-2xl text-white">
-            {isRegisterMode ? "Join RapBots" : "Welcome Back"}
-          </CardTitle>
-          <CardDescription className="text-gray-400">
-            {isRegisterMode ? "Create your account to start battling" : "Login to continue your rap battles"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {isRegisterMode && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName" className="text-gray-300">First Name</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <Input
-                      id="firstName"
-                      type="text"
-                      placeholder="First name"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      className="bg-slate-700 border-slate-600 text-white placeholder-gray-400 pl-10"
-                    />
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Animated Neon Apex Background */}
+      <div className="fixed inset-0 pointer-events-none opacity-30">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#8b5cf640_1px,transparent_1px),linear-gradient(to_bottom,#8b5cf640_1px,transparent_1px)] bg-[size:64px_64px] animate-slow-pulse"></div>
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-prism-cyan rounded-full blur-3xl opacity-10 animate-slow-pulse"></div>
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-neon-magenta rounded-full blur-3xl opacity-10 animate-slow-pulse" style={{ animationDelay: '1s' }}></div>
+      </div>
+
+      <motion.div
+        className="w-full max-w-md relative z-10"
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        <Card className="glass-card neon-border-magenta glow-pulse-magenta">
+          <CardHeader className="text-center pb-8">
+            <motion.div 
+              className="flex justify-center mb-6"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.2, type: "spring" }}
+            >
+              <div className="w-20 h-20 bg-gradient-primary-bg rounded-full flex items-center justify-center neon-border-magenta glow-pulse-magenta">
+                <Mic className="w-10 h-10 text-white" />
+              </div>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              <CardTitle className="text-3xl font-orbitron font-bold text-white mb-2">
+                {isRegisterMode ? "JOIN RAPBOTS" : "SIGN IN"}
+              </CardTitle>
+              <CardDescription className="text-gray-300 text-base">
+                {isRegisterMode ? "Create your account to start battling" : "Login to continue your rap battles"}
+              </CardDescription>
+            </motion.div>
+          </CardHeader>
+          
+          <CardContent>
+            <motion.form 
+              onSubmit={handleSubmit} 
+              className="space-y-5"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            >
+              {isRegisterMode && (
+                <motion.div 
+                  className="grid grid-cols-2 gap-4"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName" className="text-gray-200 font-medium">First Name</Label>
+                    <div className="relative glass-panel rounded-lg border border-transparent focus-within:border-neon-magenta focus-within:shadow-glow-magenta transition-all duration-300">
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Input
+                        id="firstName"
+                        type="text"
+                        placeholder="First name"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        className="bg-transparent border-none text-white placeholder-gray-400 pl-10 focus:ring-0"
+                      />
+                    </div>
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName" className="text-gray-300">Last Name</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <Input
-                      id="lastName"
-                      type="text"
-                      placeholder="Last name"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      className="bg-slate-700 border-slate-600 text-white placeholder-gray-400 pl-10"
-                    />
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName" className="text-gray-200 font-medium">Last Name</Label>
+                    <div className="relative glass-panel rounded-lg border border-transparent focus-within:border-neon-magenta focus-within:shadow-glow-magenta transition-all duration-300">
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Input
+                        id="lastName"
+                        type="text"
+                        placeholder="Last name"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        className="bg-transparent border-none text-white placeholder-gray-400 pl-10 focus:ring-0"
+                      />
+                    </div>
                   </div>
+                </motion.div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-gray-200 font-medium">Email</Label>
+                <div className="relative glass-panel rounded-lg border border-transparent focus-within:border-prism-cyan focus-within:shadow-glow-cyan transition-all duration-300">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="bg-transparent border-none text-white placeholder-gray-400 pl-10 focus:ring-0"
+                    required
+                  />
                 </div>
               </div>
-            )}
 
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-300">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="bg-slate-700 border-slate-600 text-white placeholder-gray-400 pl-10"
-                  required
-                />
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-gray-200 font-medium">Password</Label>
+                <div className="relative glass-panel rounded-lg border border-transparent focus-within:border-prism-cyan focus-within:shadow-glow-cyan transition-all duration-300">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder={isRegisterMode ? "Create a password (min. 6 characters)" : "Enter your password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="bg-transparent border-none text-white placeholder-gray-400 pl-10 focus:ring-0"
+                    minLength={6}
+                    required
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-gray-300">Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder={isRegisterMode ? "Create a password (min. 6 characters)" : "Enter your password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="bg-slate-700 border-slate-600 text-white placeholder-gray-400 pl-10"
-                  minLength={6}
-                  required
-                />
-              </div>
-            </div>
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Button
+                  type="submit"
+                  className="w-full gradient-primary-bg neon-border-cyan hover-lift text-white font-bold text-lg py-6 rounded-lg"
+                  disabled={isLoading || !email.trim() || !password.trim()}
+                >
+                  {isLoading 
+                    ? (isRegisterMode ? "Creating account..." : "Logging in...") 
+                    : (isRegisterMode ? "Create Account" : "Sign In")}
+                </Button>
+              </motion.div>
+            </motion.form>
 
-            <Button
-              type="submit"
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white"
-              disabled={isLoading || !email.trim() || !password.trim()}
+            <motion.div 
+              className="mt-6 text-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
             >
-              {isLoading 
-                ? (isRegisterMode ? "Creating account..." : "Logging in...") 
-                : (isRegisterMode ? "Create Account" : "Login")}
-            </Button>
-          </form>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsRegisterMode(!isRegisterMode);
+                  setEmail("");
+                  setPassword("");
+                  setFirstName("");
+                  setLastName("");
+                }}
+                className="text-sm text-gray-300 hover:text-neon-magenta transition-colors duration-300"
+              >
+                {isRegisterMode ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
+              </button>
+            </motion.div>
 
-          <div className="mt-4 text-center">
-            <button
-              type="button"
-              onClick={() => {
-                setIsRegisterMode(!isRegisterMode);
-                setEmail("");
-                setPassword("");
-                setFirstName("");
-                setLastName("");
-              }}
-              className="text-sm text-gray-400 hover:text-purple-400 transition-colors"
+            <motion.div 
+              className="mt-6 text-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.6 }}
             >
-              {isRegisterMode ? "Already have an account? Login" : "Don't have an account? Sign up"}
-            </button>
-          </div>
-
-          <div className="mt-6 text-center">
-            <Button
-              variant="ghost"
-              onClick={() => setLocation("/")}
-              className="text-gray-400 hover:text-white"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Home
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+              <Button
+                variant="ghost"
+                onClick={() => setLocation("/")}
+                className="text-gray-300 hover:text-white hover-lift"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Home
+              </Button>
+            </motion.div>
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
   );
 }
