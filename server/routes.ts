@@ -241,6 +241,492 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // BATTLE PASS API ENDPOINTS
+  app.get('/api/battle-pass', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+
+      const activePass = await storage.getActiveBattlePass();
+      if (!activePass) {
+        return res.status(404).json({ error: 'No active battle pass season' });
+      }
+
+      let userPass = await storage.getUserBattlePass(userId, activePass.id);
+      if (!userPass) {
+        userPass = await storage.createUserBattlePass(userId, activePass.id);
+      }
+
+      res.json({
+        id: userPass.id,
+        userId: userPass.userId,
+        seasonId: activePass.id,
+        seasonName: activePass.name,
+        currentTier: userPass.currentTier,
+        totalXP: userPass.currentXP,
+        isPremium: userPass.isPremium,
+        claimedTiers: userPass.claimedRewards,
+        maxTiers: activePass.maxTiers,
+        endDate: activePass.endDate,
+      });
+    } catch (error: any) {
+      console.error('Error fetching battle pass:', error);
+      res.status(500).json({ error: 'Failed to fetch battle pass' });
+    }
+  });
+
+  app.get('/api/battle-pass/tiers', isAuthenticated, async (req: any, res) => {
+    try {
+      const activePass = await storage.getActiveBattlePass();
+      if (!activePass) {
+        return res.status(404).json({ error: 'No active battle pass season' });
+      }
+
+      const tiers = await storage.getBattlePassTiers(activePass.id);
+
+      const formattedTiers = tiers.map(tier => ({
+        id: tier.id,
+        tier: tier.tier,
+        xpRequired: tier.xpRequired,
+        freeReward: {
+          type: tier.freeRewardType,
+          value: tier.freeRewardAmount,
+          item: tier.freeRewardId,
+        },
+        premiumReward: {
+          type: tier.premiumRewardType,
+          value: tier.premiumRewardAmount,
+          item: tier.premiumRewardId,
+        },
+      }));
+
+      res.json(formattedTiers);
+    } catch (error: any) {
+      console.error('Error fetching battle pass tiers:', error);
+      res.status(500).json({ error: 'Failed to fetch battle pass tiers' });
+    }
+  });
+
+  app.post('/api/battle-pass/claim/:tier', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const tier = parseInt(req.params.tier);
+
+      if (isNaN(tier) || tier < 1) {
+        return res.status(400).json({ error: 'Invalid tier number' });
+      }
+
+      const activePass = await storage.getActiveBattlePass();
+      if (!activePass) {
+        return res.status(404).json({ error: 'No active battle pass season' });
+      }
+
+      const updatedPass = await storage.claimBattlePassReward(userId, activePass.id, tier);
+
+      res.json({
+        success: true,
+        message: `Tier ${tier} rewards claimed successfully`,
+        claimedTiers: updatedPass.claimedRewards,
+      });
+    } catch (error: any) {
+      console.error('Error claiming battle pass reward:', error);
+      const status = error.message?.includes('not yet unlocked') ? 403 :
+                     error.message?.includes('already claimed') ? 409 : 500;
+      res.status(status).json({ error: error.message || 'Failed to claim reward' });
+    }
+  });
+
+  app.post('/api/battle-pass/upgrade', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+
+      const activePass = await storage.getActiveBattlePass();
+      if (!activePass) {
+        return res.status(404).json({ error: 'No active battle pass season' });
+      }
+
+      const updatedPass = await storage.upgradeBattlePassToPremium(userId, activePass.id);
+
+      res.json({
+        success: true,
+        message: 'Battle Pass upgraded to premium!',
+        isPremium: updatedPass.isPremium,
+        purchasedAt: updatedPass.purchasedAt,
+      });
+    } catch (error: any) {
+      console.error('Error upgrading battle pass:', error);
+      const status = error.message?.includes('Insufficient') ? 402 : 500;
+      res.status(status).json({ error: error.message || 'Failed to upgrade battle pass' });
+    }
+  });
+
+  // SHOP API ENDPOINTS
+  app.get('/api/shop/items', isAuthenticated, async (req: any, res) => {
+    try {
+      const items = await storage.getAllCosmeticItems();
+
+      const formattedItems = items.map(item => ({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        type: item.type,
+        rarity: item.rarity,
+        imageUrl: item.imageUrl,
+        price: item.price,
+        unlockLevel: item.unlockLevel,
+        isPremium: item.isPremium,
+        isLimited: item.isLimited,
+        availableUntil: item.availableUntil,
+        metadata: item.metadata,
+      }));
+
+      res.json(formattedItems);
+    } catch (error: any) {
+      console.error('Error fetching shop items:', error);
+      res.status(500).json({ error: 'Failed to fetch shop items' });
+    }
+  });
+
+  app.get('/api/shop/inventory', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+
+      const inventory = await storage.getUserInventory(userId);
+      const currency = await storage.getUserCurrency(userId);
+
+      const equipped = inventory.filter(item => item.isEquipped);
+
+      res.json({
+        currency,
+        items: inventory,
+        equipped: {
+          avatar: equipped.find(item => item.type === 'avatar'),
+          badge: equipped.find(item => item.type === 'badge'),
+          title: equipped.find(item => item.type === 'title'),
+          emote: equipped.find(item => item.type === 'emote'),
+          effect: equipped.find(item => item.type === 'mic_effect'),
+        },
+      });
+    } catch (error: any) {
+      console.error('Error fetching inventory:', error);
+      res.status(500).json({ error: 'Failed to fetch inventory' });
+    }
+  });
+
+  app.post('/api/shop/purchase', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { itemId } = req.body;
+
+      if (!itemId) {
+        return res.status(400).json({ error: 'itemId is required' });
+      }
+
+      const item = await storage.getCosmeticItemById(itemId);
+      if (!item) {
+        return res.status(404).json({ error: 'Item not found' });
+      }
+
+      if (!item.price) {
+        return res.status(400).json({ error: 'Item not purchasable' });
+      }
+
+      const price = parseInt(item.price);
+      const newItem = await storage.purchaseCosmetic(userId, itemId, price);
+
+      res.json({
+        success: true,
+        message: `${item.name} purchased successfully`,
+        item: newItem,
+      });
+    } catch (error: any) {
+      console.error('Error purchasing item:', error);
+      const status = error.message?.includes('Insufficient') ? 402 :
+                     error.message?.includes('already owned') ? 409 : 500;
+      res.status(status).json({ error: error.message || 'Failed to purchase item' });
+    }
+  });
+
+  app.post('/api/shop/equip', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { itemId } = req.body;
+
+      if (!itemId) {
+        return res.status(400).json({ error: 'itemId is required' });
+      }
+
+      await storage.equipCosmetic(userId, itemId);
+
+      res.json({
+        success: true,
+        message: 'Item equipped successfully',
+      });
+    } catch (error: any) {
+      console.error('Error equipping item:', error);
+      const status = error.message?.includes('not in inventory') ? 404 : 500;
+      res.status(status).json({ error: error.message || 'Failed to equip item' });
+    }
+  });
+
+  // CHALLENGES API ENDPOINTS
+  app.get('/api/challenges/daily', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+
+      let userChallenges = await storage.getUserDailyChallenges(userId);
+
+      if (userChallenges.length === 0) {
+        const allChallenges = await storage.getActiveDailyChallenges();
+        const selectedChallenges = allChallenges
+          .sort(() => Math.random() - 0.5)
+          .slice(0, 5);
+        
+        const challengeIds = selectedChallenges.map(c => c.id);
+        await storage.assignDailyChallenges(userId, challengeIds);
+
+        userChallenges = await storage.getUserDailyChallenges(userId);
+      }
+
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+
+      res.json({
+        challenges: userChallenges.map(c => ({
+          id: c.challengeId,
+          name: c.name,
+          description: c.description,
+          type: c.type,
+          requirement: c.requirement,
+          progress: c.progress,
+          isCompleted: c.isCompleted,
+          rewardClaimed: c.rewardClaimed,
+          xpReward: c.xpReward,
+          currencyReward: c.currencyReward,
+          difficulty: c.difficulty,
+        })),
+        expiresAt: tomorrow,
+      });
+    } catch (error: any) {
+      console.error('Error fetching daily challenges:', error);
+      res.status(500).json({ error: 'Failed to fetch daily challenges' });
+    }
+  });
+
+  app.get('/api/challenges/progress', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+
+      const userChallenges = await storage.getUserDailyChallenges(userId);
+
+      const progress = userChallenges.map(c => ({
+        challengeId: c.challengeId,
+        name: c.name,
+        progress: c.progress,
+        requirement: c.requirement,
+        isCompleted: c.isCompleted,
+        completedAt: c.completedAt,
+        rewardClaimed: c.rewardClaimed,
+      }));
+
+      res.json(progress);
+    } catch (error: any) {
+      console.error('Error fetching challenge progress:', error);
+      res.status(500).json({ error: 'Failed to fetch challenge progress' });
+    }
+  });
+
+  app.post('/api/challenges/claim/:challengeId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const challengeId = req.params.challengeId;
+
+      await storage.claimChallengeReward(userId, challengeId);
+
+      res.json({
+        success: true,
+        message: 'Challenge reward claimed successfully',
+      });
+    } catch (error: any) {
+      console.error('Error claiming challenge reward:', error);
+      const status = error.message?.includes('not completed') ? 403 :
+                     error.message?.includes('already claimed') ? 409 :
+                     error.message?.includes('not found') ? 404 : 500;
+      res.status(status).json({ error: error.message || 'Failed to claim reward' });
+    }
+  });
+
+  // MATCHMAKING API ENDPOINTS
+  app.get('/api/matchmaking/status', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+
+      const queueEntry = await storage.getUserMatchmakingQueue(userId);
+
+      if (!queueEntry) {
+        return res.json({
+          inQueue: false,
+          matchFound: false,
+        });
+      }
+
+      const isExpired = new Date() > new Date(queueEntry.expiresAt);
+      if (isExpired) {
+        await storage.removeMatchmakingEntry(userId);
+        return res.json({
+          inQueue: false,
+          matchFound: false,
+        });
+      }
+
+      if (queueEntry.status === 'matched') {
+        return res.json({
+          inQueue: true,
+          matchFound: true,
+          opponentId: queueEntry.matchedWithUserId,
+          battleId: queueEntry.battleId,
+          matchedAt: queueEntry.matchedAt,
+        });
+      }
+
+      res.json({
+        inQueue: true,
+        matchFound: false,
+        queuedAt: queueEntry.joinedAt,
+        expiresAt: queueEntry.expiresAt,
+        queueType: queueEntry.queueType,
+      });
+    } catch (error: any) {
+      console.error('Error fetching matchmaking status:', error);
+      res.status(500).json({ error: 'Failed to fetch matchmaking status' });
+    }
+  });
+
+  app.get('/api/matchmaking/stats', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+
+      const progress = await storage.getUserProgress(userId);
+      const stats = await storage.getUserStats(userId);
+
+      if (!progress) {
+        return res.status(404).json({ error: 'User progress not found' });
+      }
+
+      const elo = 1000 + (progress.level * 50) + (stats.totalWins * 10) - ((stats.totalBattles - stats.totalWins) * 5);
+      
+      let rank = 'Bronze';
+      if (elo >= 2000) rank = 'Diamond';
+      else if (elo >= 1700) rank = 'Platinum';
+      else if (elo >= 1400) rank = 'Gold';
+      else if (elo >= 1100) rank = 'Silver';
+
+      res.json({
+        elo,
+        rank,
+        level: progress.level,
+        totalBattles: stats.totalBattles,
+        totalWins: stats.totalWins,
+        winRate: stats.winRate,
+        winStreak: progress.winStreak,
+        bestWinStreak: progress.bestWinStreak,
+      });
+    } catch (error: any) {
+      console.error('Error fetching matchmaking stats:', error);
+      res.status(500).json({ error: 'Failed to fetch matchmaking stats' });
+    }
+  });
+
+  app.post('/api/matchmaking/queue', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { queueType = 'casual' } = req.body;
+
+      const progress = await storage.getUserProgress(userId);
+      if (!progress) {
+        return res.status(404).json({ error: 'User progress not found' });
+      }
+
+      const skillRating = 1000 + (progress.level * 50);
+
+      const entry = await storage.createMatchmakingEntry(userId, queueType, skillRating);
+
+      res.json({
+        success: true,
+        message: 'Joined matchmaking queue',
+        queuedAt: entry.joinedAt,
+        expiresAt: entry.expiresAt,
+        queueType: entry.queueType,
+      });
+    } catch (error: any) {
+      console.error('Error joining matchmaking queue:', error);
+      res.status(500).json({ error: 'Failed to join matchmaking queue' });
+    }
+  });
+
+  app.post('/api/matchmaking/leave', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+
+      await storage.removeMatchmakingEntry(userId);
+
+      res.json({
+        success: true,
+        message: 'Left matchmaking queue',
+      });
+    } catch (error: any) {
+      console.error('Error leaving matchmaking queue:', error);
+      res.status(500).json({ error: 'Failed to leave matchmaking queue' });
+    }
+  });
+
+  app.post('/api/matchmaking/accept/:matchId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const matchId = req.params.matchId;
+
+      const queueEntry = await storage.getUserMatchmakingQueue(userId);
+      if (!queueEntry || queueEntry.status !== 'matched') {
+        return res.status(404).json({ error: 'No match found' });
+      }
+
+      const opponentUserId = queueEntry.matchedWithUserId;
+      if (!opponentUserId) {
+        return res.status(400).json({ error: 'Invalid match data' });
+      }
+
+      const battle = await storage.createBattle({
+        userId,
+        isMultiplayer: true,
+        opponentUserId,
+        difficulty: 'normal',
+        profanityFilter: false,
+        lyricComplexity: 50,
+        styleIntensity: 50,
+        turnTimeLimit: 120,
+      });
+
+      await storage.updateMatchmakingStatus(userId, 'matched', {
+        opponentUserId,
+        battleId: battle.id,
+      });
+
+      await storage.removeMatchmakingEntry(userId);
+      if (opponentUserId) {
+        await storage.removeMatchmakingEntry(opponentUserId);
+      }
+
+      res.json({
+        success: true,
+        message: 'Match accepted',
+        battleId: battle.id,
+      });
+    } catch (error: any) {
+      console.error('Error accepting match:', error);
+      res.status(500).json({ error: 'Failed to accept match' });
+    }
+  });
+
   // ElevenLabs Sound Effects endpoints
   app.get('/api/sfx/:soundType', async (req, res) => {
     try {

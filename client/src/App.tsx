@@ -25,6 +25,10 @@ import ProfilePage from "@/pages/profile";
 import WalletPage from "@/pages/wallet";
 import TrainingPage from "@/pages/Training";
 import AdminWalletPage from "@/pages/AdminWallet";
+import BattlePassPage from "@/pages/battle-pass";
+import ShopPage from "@/pages/shop";
+import ChallengesPage from "@/pages/challenges";
+import MatchmakingPage from "@/pages/matchmaking";
 import NotFound from "@/pages/not-found";
 import AdminPage from "@/pages/admin";
 
@@ -75,6 +79,10 @@ function Router() {
           <Route path="/profile" component={ProfilePage} />
           <Route path="/wallet" component={WalletPage} />
           <Route path="/training" component={TrainingPage} />
+          <Route path="/battle-pass" component={BattlePassPage} />
+          <Route path="/shop" component={ShopPage} />
+          <Route path="/challenges" component={ChallengesPage} />
+          <Route path="/matchmaking" component={MatchmakingPage} />
           <Route path="/admin" component={AdminPage} />
           <Route path="/admin/wallets" component={AdminWalletPage} />
         </>

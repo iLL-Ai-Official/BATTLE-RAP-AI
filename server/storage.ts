@@ -9,6 +9,14 @@ import {
   arcTransactions,
   userProgress,
   currencyTransactions,
+  battlePasses,
+  battlePassTiers,
+  userBattlePass,
+  cosmeticItems,
+  userInventory,
+  dailyChallenges,
+  userChallengeProgress,
+  matchmakingQueue,
   type User,
   type UpsertUser,
   type Battle,
@@ -37,7 +45,7 @@ import { getCharacterById } from "@shared/characters";
 import { db, withRetry } from "./db";
 import { eq, and, gte, lt, sql, desc, count, max } from "drizzle-orm";
 import NodeCache from 'node-cache';
-import { xpService } from "./services/xpService";
+import { xpService } from './services/xpService';
 
 // Initialize cache with 10 minute TTL and 5 minute check period
 const cache = new NodeCache({ stdTTL: 600, checkperiod: 300 });
@@ -148,6 +156,37 @@ export interface IStorage {
   updateUserProgress(userId: string, totalXP?: number, level?: number, title?: string): Promise<UserProgress>;
   addCurrencyTransaction(userId: string, amount: number, type: string, description: string): Promise<void>;
   getTopUsersByLevel(limit: number): Promise<Array<{ userId: string; level: number; totalXP: number; title: string | null }>>;
+  getUserCurrency(userId: string): Promise<number>;
+
+  // Battle Pass operations
+  getActiveBattlePass(): Promise<any | undefined>;
+  getUserBattlePass(userId: string, battlePassId: string): Promise<any | undefined>;
+  createUserBattlePass(userId: string, battlePassId: string): Promise<any>;
+  getBattlePassTiers(battlePassId: string): Promise<any[]>;
+  claimBattlePassReward(userId: string, battlePassId: string, tier: number): Promise<any>;
+  upgradeBattlePassToPremium(userId: string, battlePassId: string): Promise<any>;
+  addBattlePassXP(userId: string, xpAmount: number): Promise<any>;
+
+  // Shop/Cosmetic operations
+  getAllCosmeticItems(): Promise<any[]>;
+  getCosmeticItemById(itemId: string): Promise<any | undefined>;
+  getUserInventory(userId: string): Promise<any[]>;
+  purchaseCosmetic(userId: string, cosmeticId: string, price: number): Promise<any>;
+  equipCosmetic(userId: string, cosmeticId: string): Promise<void>;
+  unequipCosmeticsByType(userId: string, type: string): Promise<void>;
+
+  // Challenges operations
+  getActiveDailyChallenges(): Promise<any[]>;
+  getUserDailyChallenges(userId: string): Promise<any[]>;
+  assignDailyChallenges(userId: string, challengeIds: string[]): Promise<void>;
+  updateChallengeProgress(userId: string, challengeId: string, progress: number): Promise<any>;
+  claimChallengeReward(userId: string, challengeId: string): Promise<any>;
+  
+  // Matchmaking operations
+  getUserMatchmakingQueue(userId: string): Promise<any | undefined>;
+  createMatchmakingEntry(userId: string, queueType: string, skillRating: number): Promise<any>;
+  removeMatchmakingEntry(userId: string): Promise<void>;
+  updateMatchmakingStatus(userId: string, status: string, matchData?: any): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -155,6 +194,11 @@ export class DatabaseStorage implements IStorage {
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    const allUsers = await db.select().from(users);
+    return allUsers;
   }
 
   async getUserByStripeCustomerId(customerId: string): Promise<User | undefined> {
@@ -1325,6 +1369,586 @@ export class DatabaseStorage implements IStorage {
       .limit(limit);
 
     return topUsers;
+  }
+
+  async getUserCurrency(userId: string): Promise<number> {
+    const transactions = await db
+      .select()
+      .from(currencyTransactions)
+      .where(eq(currencyTransactions.userId, userId));
+
+    const balance = transactions.reduce((sum, tx) => {
+      return tx.type === 'earned' || tx.type === 'purchased' ? sum + tx.amount :
+             tx.type === 'spent' || tx.type === 'refunded' ? sum - tx.amount : sum;
+    }, 0);
+
+    return Math.max(0, balance);
+  }
+
+  async getActiveBattlePass(): Promise<any | undefined> {
+    const [activePass] = await db
+      .select()
+      .from(battlePasses)
+      .where(eq(battlePasses.isActive, true))
+      .limit(1);
+
+    return activePass;
+  }
+
+  async getUserBattlePass(userId: string, battlePassId: string): Promise<any | undefined> {
+    const [userPass] = await db
+      .select()
+      .from(userBattlePass)
+      .where(and(
+        eq(userBattlePass.userId, userId),
+        eq(userBattlePass.battlePassId, battlePassId)
+      ))
+      .limit(1);
+
+    return userPass;
+  }
+
+  async createUserBattlePass(userId: string, battlePassId: string): Promise<any> {
+    const [newUserPass] = await db
+      .insert(userBattlePass)
+      .values({
+        userId,
+        battlePassId,
+        isPremium: false,
+        currentTier: 0,
+        currentXP: 0,
+        claimedRewards: [],
+      })
+      .onConflictDoNothing()
+      .returning();
+
+    if (newUserPass) {
+      console.log(`🎟️ Created battle pass for user ${userId}`);
+      return newUserPass;
+    }
+
+    return await this.getUserBattlePass(userId, battlePassId);
+  }
+
+  async getBattlePassTiers(battlePassId: string): Promise<any[]> {
+    const tiers = await db
+      .select()
+      .from(battlePassTiers)
+      .where(eq(battlePassTiers.battlePassId, battlePassId))
+      .orderBy(battlePassTiers.tier);
+
+    return tiers;
+  }
+
+  async claimBattlePassReward(userId: string, battlePassId: string, tier: number): Promise<any> {
+    const userPass = await this.getUserBattlePass(userId, battlePassId);
+    if (!userPass) {
+      throw new Error('User battle pass not found');
+    }
+
+    if (tier > userPass.currentTier) {
+      throw new Error('Tier not yet unlocked');
+    }
+
+    if (userPass.claimedRewards.includes(tier)) {
+      throw new Error('Reward already claimed');
+    }
+
+    const [tierData] = await db
+      .select()
+      .from(battlePassTiers)
+      .where(and(
+        eq(battlePassTiers.battlePassId, battlePassId),
+        eq(battlePassTiers.tier, tier)
+      ))
+      .limit(1);
+
+    if (!tierData) {
+      throw new Error('Tier not found');
+    }
+
+    const [updated] = await db
+      .update(userBattlePass)
+      .set({
+        claimedRewards: [...userPass.claimedRewards, tier],
+        updatedAt: new Date(),
+      })
+      .where(and(
+        eq(userBattlePass.userId, userId),
+        eq(userBattlePass.battlePassId, battlePassId)
+      ))
+      .returning();
+
+    if (tierData.freeRewardType === 'currency' && tierData.freeRewardAmount) {
+      await this.addCurrencyTransaction(userId, tierData.freeRewardAmount, 'earned', `Battle Pass Tier ${tier} reward`);
+    }
+
+    if (userPass.isPremium && tierData.premiumRewardType === 'currency' && tierData.premiumRewardAmount) {
+      await this.addCurrencyTransaction(userId, tierData.premiumRewardAmount, 'earned', `Battle Pass Tier ${tier} premium reward`);
+    }
+
+    if (tierData.freeRewardType === 'cosmetic' && tierData.freeRewardId) {
+      await db.insert(userInventory).values({
+        userId,
+        cosmeticId: tierData.freeRewardId,
+        isEquipped: false,
+      }).onConflictDoNothing();
+    }
+
+    if (userPass.isPremium && tierData.premiumRewardType === 'cosmetic' && tierData.premiumRewardId) {
+      await db.insert(userInventory).values({
+        userId,
+        cosmeticId: tierData.premiumRewardId,
+        isEquipped: false,
+      }).onConflictDoNothing();
+    }
+
+    console.log(`🎁 User ${userId} claimed Battle Pass tier ${tier} rewards`);
+    return updated;
+  }
+
+  async upgradeBattlePassToPremium(userId: string, battlePassId: string): Promise<any> {
+    const user = await this.getUser(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const currency = await this.getUserCurrency(userId);
+    const upgradeCost = 999;
+
+    if (currency < upgradeCost) {
+      throw new Error('Insufficient currency');
+    }
+
+    await this.addCurrencyTransaction(userId, upgradeCost, 'spent', 'Battle Pass premium upgrade');
+
+    const [updated] = await db
+      .update(userBattlePass)
+      .set({
+        isPremium: true,
+        purchasedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(and(
+        eq(userBattlePass.userId, userId),
+        eq(userBattlePass.battlePassId, battlePassId)
+      ))
+      .returning();
+
+    console.log(`⭐ User ${userId} upgraded to premium Battle Pass`);
+    return updated;
+  }
+
+  async addBattlePassXP(userId: string, xpAmount: number): Promise<any> {
+    const activePass = await this.getActiveBattlePass();
+    if (!activePass) {
+      throw new Error('No active battle pass');
+    }
+
+    let userPass = await this.getUserBattlePass(userId, activePass.id);
+    if (!userPass) {
+      userPass = await this.createUserBattlePass(userId, activePass.id);
+    }
+
+    const newXP = userPass.currentXP + xpAmount;
+    const tiers = await this.getBattlePassTiers(activePass.id);
+    
+    let newTier = userPass.currentTier;
+    for (const tier of tiers) {
+      if (newXP >= tier.xpRequired && tier.tier > newTier) {
+        newTier = tier.tier;
+      }
+    }
+
+    const [updated] = await db
+      .update(userBattlePass)
+      .set({
+        currentXP: newXP,
+        currentTier: newTier,
+        updatedAt: new Date(),
+      })
+      .where(and(
+        eq(userBattlePass.userId, userId),
+        eq(userBattlePass.battlePassId, activePass.id)
+      ))
+      .returning();
+
+    if (newTier > userPass.currentTier) {
+      console.log(`🆙 User ${userId} advanced to Battle Pass tier ${newTier}`);
+    }
+
+    return updated;
+  }
+
+  async getAllCosmeticItems(): Promise<any[]> {
+    const items = await db
+      .select()
+      .from(cosmeticItems)
+      .where(sql`${cosmeticItems.availableUntil} IS NULL OR ${cosmeticItems.availableUntil} > NOW()`)
+      .orderBy(cosmeticItems.rarity, cosmeticItems.type);
+
+    return items;
+  }
+
+  async getCosmeticItemById(itemId: string): Promise<any | undefined> {
+    const [item] = await db
+      .select()
+      .from(cosmeticItems)
+      .where(eq(cosmeticItems.id, itemId))
+      .limit(1);
+
+    return item;
+  }
+
+  async getUserInventory(userId: string): Promise<any[]> {
+    const inventory = await db
+      .select({
+        id: userInventory.id,
+        userId: userInventory.userId,
+        cosmeticId: userInventory.cosmeticId,
+        isEquipped: userInventory.isEquipped,
+        acquiredAt: userInventory.acquiredAt,
+        name: cosmeticItems.name,
+        description: cosmeticItems.description,
+        type: cosmeticItems.type,
+        rarity: cosmeticItems.rarity,
+        imageUrl: cosmeticItems.imageUrl,
+        metadata: cosmeticItems.metadata,
+      })
+      .from(userInventory)
+      .innerJoin(cosmeticItems, eq(userInventory.cosmeticId, cosmeticItems.id))
+      .where(eq(userInventory.userId, userId))
+      .orderBy(desc(userInventory.acquiredAt));
+
+    return inventory;
+  }
+
+  async purchaseCosmetic(userId: string, cosmeticId: string, price: number): Promise<any> {
+    const currency = await this.getUserCurrency(userId);
+    if (currency < price) {
+      throw new Error('Insufficient currency');
+    }
+
+    const existing = await db
+      .select()
+      .from(userInventory)
+      .where(and(
+        eq(userInventory.userId, userId),
+        eq(userInventory.cosmeticId, cosmeticId)
+      ))
+      .limit(1);
+
+    if (existing.length > 0) {
+      throw new Error('Item already owned');
+    }
+
+    await this.addCurrencyTransaction(userId, price, 'spent', 'Purchased cosmetic item');
+
+    const [newItem] = await db
+      .insert(userInventory)
+      .values({
+        userId,
+        cosmeticId,
+        isEquipped: false,
+      })
+      .returning();
+
+    console.log(`🛍️ User ${userId} purchased cosmetic ${cosmeticId}`);
+    return newItem;
+  }
+
+  async equipCosmetic(userId: string, cosmeticId: string): Promise<void> {
+    const [item] = await db
+      .select()
+      .from(userInventory)
+      .innerJoin(cosmeticItems, eq(userInventory.cosmeticId, cosmeticItems.id))
+      .where(and(
+        eq(userInventory.userId, userId),
+        eq(userInventory.cosmeticId, cosmeticId)
+      ))
+      .limit(1);
+
+    if (!item) {
+      throw new Error('Item not in inventory');
+    }
+
+    await this.unequipCosmeticsByType(userId, item.cosmetic_items.type);
+
+    await db
+      .update(userInventory)
+      .set({ isEquipped: true })
+      .where(and(
+        eq(userInventory.userId, userId),
+        eq(userInventory.cosmeticId, cosmeticId)
+      ));
+
+    console.log(`✨ User ${userId} equipped cosmetic ${cosmeticId}`);
+  }
+
+  async unequipCosmeticsByType(userId: string, type: string): Promise<void> {
+    const itemsOfType = await db
+      .select({ cosmeticId: userInventory.cosmeticId })
+      .from(userInventory)
+      .innerJoin(cosmeticItems, eq(userInventory.cosmeticId, cosmeticItems.id))
+      .where(and(
+        eq(userInventory.userId, userId),
+        eq(cosmeticItems.type, type),
+        eq(userInventory.isEquipped, true)
+      ));
+
+    for (const item of itemsOfType) {
+      await db
+        .update(userInventory)
+        .set({ isEquipped: false })
+        .where(and(
+          eq(userInventory.userId, userId),
+          eq(userInventory.cosmeticId, item.cosmeticId)
+        ));
+    }
+  }
+
+  async getActiveDailyChallenges(): Promise<any[]> {
+    const challenges = await db
+      .select()
+      .from(dailyChallenges)
+      .where(eq(dailyChallenges.isActive, true))
+      .limit(10);
+
+    return challenges;
+  }
+
+  async getUserDailyChallenges(userId: string): Promise<any[]> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const userChallenges = await db
+      .select({
+        id: userChallengeProgress.id,
+        userId: userChallengeProgress.userId,
+        challengeId: userChallengeProgress.challengeId,
+        progress: userChallengeProgress.progress,
+        isCompleted: userChallengeProgress.isCompleted,
+        completedAt: userChallengeProgress.completedAt,
+        rewardClaimed: userChallengeProgress.rewardClaimed,
+        dateAssigned: userChallengeProgress.dateAssigned,
+        name: dailyChallenges.name,
+        description: dailyChallenges.description,
+        type: dailyChallenges.type,
+        requirement: dailyChallenges.requirement,
+        xpReward: dailyChallenges.xpReward,
+        currencyReward: dailyChallenges.currencyReward,
+        difficulty: dailyChallenges.difficulty,
+      })
+      .from(userChallengeProgress)
+      .innerJoin(dailyChallenges, eq(userChallengeProgress.challengeId, dailyChallenges.id))
+      .where(and(
+        eq(userChallengeProgress.userId, userId),
+        gte(userChallengeProgress.dateAssigned, today)
+      ));
+
+    return userChallenges;
+  }
+
+  async assignDailyChallenges(userId: string, challengeIds: string[]): Promise<void> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const existingChallenges = await db
+      .select()
+      .from(userChallengeProgress)
+      .where(and(
+        eq(userChallengeProgress.userId, userId),
+        gte(userChallengeProgress.dateAssigned, today)
+      ));
+
+    if (existingChallenges.length > 0) {
+      console.log(`User ${userId} already has daily challenges assigned`);
+      return;
+    }
+
+    const values = challengeIds.map(challengeId => ({
+      userId,
+      challengeId,
+      progress: 0,
+      isCompleted: false,
+      rewardClaimed: false,
+      dateAssigned: new Date(),
+    }));
+
+    await db.insert(userChallengeProgress).values(values);
+    console.log(`📋 Assigned ${challengeIds.length} daily challenges to user ${userId}`);
+  }
+
+  async updateChallengeProgress(userId: string, challengeId: string, progress: number): Promise<any> {
+    const [challenge] = await db
+      .select()
+      .from(dailyChallenges)
+      .where(eq(dailyChallenges.id, challengeId))
+      .limit(1);
+
+    if (!challenge) {
+      throw new Error('Challenge not found');
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const [userChallenge] = await db
+      .select()
+      .from(userChallengeProgress)
+      .where(and(
+        eq(userChallengeProgress.userId, userId),
+        eq(userChallengeProgress.challengeId, challengeId),
+        gte(userChallengeProgress.dateAssigned, today)
+      ))
+      .limit(1);
+
+    if (!userChallenge) {
+      throw new Error('User challenge not found');
+    }
+
+    const isCompleted = progress >= challenge.requirement;
+    const completedAt = isCompleted && !userChallenge.isCompleted ? new Date() : userChallenge.completedAt;
+
+    const [updated] = await db
+      .update(userChallengeProgress)
+      .set({
+        progress: Math.min(progress, challenge.requirement),
+        isCompleted,
+        completedAt,
+      })
+      .where(and(
+        eq(userChallengeProgress.userId, userId),
+        eq(userChallengeProgress.challengeId, challengeId)
+      ))
+      .returning();
+
+    if (isCompleted && !userChallenge.isCompleted) {
+      console.log(`✅ User ${userId} completed challenge ${challengeId}`);
+    }
+
+    return updated;
+  }
+
+  async claimChallengeReward(userId: string, challengeId: string): Promise<any> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const [userChallenge] = await db
+      .select({
+        id: userChallengeProgress.id,
+        isCompleted: userChallengeProgress.isCompleted,
+        rewardClaimed: userChallengeProgress.rewardClaimed,
+        xpReward: dailyChallenges.xpReward,
+        currencyReward: dailyChallenges.currencyReward,
+        challengeName: dailyChallenges.name,
+      })
+      .from(userChallengeProgress)
+      .innerJoin(dailyChallenges, eq(userChallengeProgress.challengeId, dailyChallenges.id))
+      .where(and(
+        eq(userChallengeProgress.userId, userId),
+        eq(userChallengeProgress.challengeId, challengeId),
+        gte(userChallengeProgress.dateAssigned, today)
+      ))
+      .limit(1);
+
+    if (!userChallenge) {
+      throw new Error('Challenge not found');
+    }
+
+    if (!userChallenge.isCompleted) {
+      throw new Error('Challenge not completed');
+    }
+
+    if (userChallenge.rewardClaimed) {
+      throw new Error('Reward already claimed');
+    }
+
+    if (userChallenge.xpReward > 0) {
+      await xpService.awardXP(userId, userChallenge.xpReward, `Challenge: ${userChallenge.challengeName}`);
+    }
+
+    if (userChallenge.currencyReward > 0) {
+      await this.addCurrencyTransaction(
+        userId,
+        userChallenge.currencyReward,
+        'earned',
+        `Challenge: ${userChallenge.challengeName}`
+      );
+    }
+
+    const [updated] = await db
+      .update(userChallengeProgress)
+      .set({ rewardClaimed: true })
+      .where(and(
+        eq(userChallengeProgress.userId, userId),
+        eq(userChallengeProgress.challengeId, challengeId)
+      ))
+      .returning();
+
+    console.log(`🎁 User ${userId} claimed challenge ${challengeId} rewards`);
+    return updated;
+  }
+
+  async getUserMatchmakingQueue(userId: string): Promise<any | undefined> {
+    const [entry] = await db
+      .select()
+      .from(matchmakingQueue)
+      .where(and(
+        eq(matchmakingQueue.userId, userId),
+        eq(matchmakingQueue.status, 'waiting')
+      ))
+      .limit(1);
+
+    return entry;
+  }
+
+  async createMatchmakingEntry(userId: string, queueType: string, skillRating: number): Promise<any> {
+    await this.removeMatchmakingEntry(userId);
+
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + 5);
+
+    const [entry] = await db
+      .insert(matchmakingQueue)
+      .values({
+        userId,
+        queueType,
+        skillRating,
+        status: 'waiting',
+        expiresAt,
+      })
+      .returning();
+
+    console.log(`🎮 User ${userId} joined ${queueType} matchmaking queue`);
+    return entry;
+  }
+
+  async removeMatchmakingEntry(userId: string): Promise<void> {
+    await db
+      .delete(matchmakingQueue)
+      .where(eq(matchmakingQueue.userId, userId));
+
+    console.log(`❌ Removed user ${userId} from matchmaking queue`);
+  }
+
+  async updateMatchmakingStatus(userId: string, status: string, matchData?: any): Promise<any> {
+    const updates: any = { status };
+
+    if (status === 'matched' && matchData) {
+      updates.matchedWithUserId = matchData.opponentUserId;
+      updates.battleId = matchData.battleId;
+      updates.matchedAt = new Date();
+    }
+
+    const [updated] = await db
+      .update(matchmakingQueue)
+      .set(updates)
+      .where(eq(matchmakingQueue.userId, userId))
+      .returning();
+
+    console.log(`📊 Updated matchmaking status for user ${userId}: ${status}`);
+    return updated;
   }
 }
 

@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { challengeRotationService } from "./services/challengeRotation";
 import path from "path";
 import fs from "fs";
 
@@ -68,6 +69,9 @@ app.use((req, res, next) => {
   app.use('/attached_assets', express.static(path.resolve(import.meta.dirname, '..', 'attached_assets')));
 
   const server = await registerRoutes(app);
+
+  challengeRotationService.start();
+  console.log('🔄 Daily challenges rotation service started');
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
