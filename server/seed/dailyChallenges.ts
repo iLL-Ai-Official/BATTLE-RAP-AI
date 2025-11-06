@@ -3,7 +3,7 @@ export const dailyChallengesData = [
   {
     name: 'Daily Victor',
     description: 'Win 3 battles today',
-    type: 'win_battles',
+    type: 'battle_wins',
     requirement: 3,
     xpReward: 300,
     currencyReward: 150,
@@ -14,7 +14,7 @@ export const dailyChallengesData = [
   {
     name: 'Dominator',
     description: 'Win 5 battles today',
-    type: 'win_battles',
+    type: 'battle_wins',
     requirement: 5,
     xpReward: 500,
     currencyReward: 250,
@@ -25,7 +25,7 @@ export const dailyChallengesData = [
   {
     name: 'Unstoppable',
     description: 'Win 10 battles today',
-    type: 'win_battles',
+    type: 'battle_wins',
     requirement: 10,
     xpReward: 1000,
     currencyReward: 500,
@@ -34,12 +34,12 @@ export const dailyChallengesData = [
     rotatesDaily: true,
   },
 
-  // PLAY-BASED CHALLENGES
+  // TRAINING CHALLENGES
   {
     name: 'Practice Makes Perfect',
-    description: 'Complete 5 battles (win or lose)',
-    type: 'play_battles',
-    requirement: 5,
+    description: 'Complete 3 training lessons',
+    type: 'training',
+    requirement: 3,
     xpReward: 200,
     currencyReward: 100,
     difficulty: 'easy',
@@ -47,10 +47,10 @@ export const dailyChallengesData = [
     rotatesDaily: true,
   },
   {
-    name: 'Battle Enthusiast',
-    description: 'Complete 10 battles today',
-    type: 'play_battles',
-    requirement: 10,
+    name: 'Training Expert',
+    description: 'Complete 5 training lessons today',
+    type: 'training',
+    requirement: 5,
     xpReward: 400,
     currencyReward: 200,
     difficulty: 'medium',
@@ -58,12 +58,12 @@ export const dailyChallengesData = [
     rotatesDaily: true,
   },
 
-  // WIN STREAK CHALLENGES
+  // RHYME DENSITY CHALLENGES
   {
-    name: 'Hot Streak',
-    description: 'Win 3 battles in a row',
-    type: 'win_streak',
-    requirement: 3,
+    name: 'Rhyme Master',
+    description: 'Achieve 80% rhyme density in a battle',
+    type: 'rhyme_density',
+    requirement: 80,
     xpReward: 400,
     currencyReward: 200,
     difficulty: 'medium',
@@ -71,10 +71,10 @@ export const dailyChallengesData = [
     rotatesDaily: true,
   },
   {
-    name: 'On Fire',
-    description: 'Win 5 battles in a row',
-    type: 'win_streak',
-    requirement: 5,
+    name: 'Perfect Rhymer',
+    description: 'Achieve 95% rhyme density in a battle',
+    type: 'rhyme_density',
+    requirement: 95,
     xpReward: 800,
     currencyReward: 400,
     difficulty: 'hard',
@@ -86,7 +86,7 @@ export const dailyChallengesData = [
   {
     name: 'High Scorer',
     description: 'Score 800+ points in a single battle',
-    type: 'earn_score',
+    type: 'score_threshold',
     requirement: 800,
     xpReward: 350,
     currencyReward: 175,
@@ -97,7 +97,7 @@ export const dailyChallengesData = [
   {
     name: 'Perfect Performance',
     description: 'Score 1000+ points in a single battle',
-    type: 'earn_score',
+    type: 'score_threshold',
     requirement: 1000,
     xpReward: 600,
     currencyReward: 300,
@@ -106,11 +106,11 @@ export const dailyChallengesData = [
     rotatesDaily: true,
   },
 
-  // CHARACTER-SPECIFIC CHALLENGES
+  // TOURNAMENT CHALLENGES
   {
-    name: 'Razor Sharp',
-    description: 'Win a battle using MC Razor',
-    type: 'use_character',
+    name: 'Tournament Contender',
+    description: 'Win a tournament match',
+    type: 'tournament',
     requirement: 1,
     xpReward: 250,
     currencyReward: 125,
@@ -119,33 +119,33 @@ export const dailyChallengesData = [
     rotatesDaily: true,
   },
   {
-    name: 'Venom Master',
-    description: 'Win a battle using MC Venom',
-    type: 'use_character',
-    requirement: 1,
-    xpReward: 250,
-    currencyReward: 125,
-    difficulty: 'easy',
+    name: 'Tournament Victor',
+    description: 'Win 3 tournament matches',
+    type: 'tournament',
+    requirement: 3,
+    xpReward: 500,
+    currencyReward: 250,
+    difficulty: 'medium',
     isActive: true,
     rotatesDaily: true,
   },
   {
-    name: 'Silk Smooth',
-    description: 'Win a battle using MC Silk',
-    type: 'use_character',
+    name: 'Tournament Champion',
+    description: 'Win an entire tournament',
+    type: 'tournament',
     requirement: 1,
-    xpReward: 250,
-    currencyReward: 125,
-    difficulty: 'easy',
+    xpReward: 1000,
+    currencyReward: 500,
+    difficulty: 'hard',
     isActive: true,
     rotatesDaily: true,
   },
 
-  // COMBO CHALLENGES
+  // MIXED CHALLENGES
   {
     name: 'Well Rounded',
     description: 'Win battles against 3 different opponents',
-    type: 'use_character',
+    type: 'battle_wins',
     requirement: 3,
     xpReward: 450,
     currencyReward: 225,
@@ -156,7 +156,7 @@ export const dailyChallengesData = [
   {
     name: 'Nightmare Slayer',
     description: 'Win a battle on Nightmare difficulty',
-    type: 'win_battles',
+    type: 'battle_wins',
     requirement: 1,
     xpReward: 700,
     currencyReward: 350,
