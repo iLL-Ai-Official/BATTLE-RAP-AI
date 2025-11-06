@@ -639,8 +639,83 @@ export type BattlePass = typeof battlePasses.$inferSelect;
 export type UserBattlePass = typeof userBattlePass.$inferSelect;
 export type DailyChallenge = typeof dailyChallenges.$inferSelect;
 
+// Rap Training Program
+export const trainingLessons = pgTable("training_lessons", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: varchar("title").notNull(),
+  description: text("description").notNull(),
+  category: varchar("category").notNull(), // basics, rhyme_schemes, flow, wordplay, battle_tactics, advanced
+  difficulty: varchar("difficulty").notNull().default("beginner"), // beginner, intermediate, advanced, expert
+  order: integer("order").notNull(), // Display order
+  videoUrl: varchar("video_url"), // Tutorial video URL
+  content: text("content").notNull(), // Lesson content (markdown)
+  practicePrompt: text("practice_prompt"), // What to practice
+  xpReward: integer("xp_reward").notNull().default(100),
+  currencyReward: integer("currency_reward").notNull().default(50),
+  unlockLevel: integer("unlock_level").default(1), // Level required to unlock
+  isPremium: boolean("is_premium").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const userTrainingProgress = pgTable("user_training_progress", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  lessonId: varchar("lesson_id").references(() => trainingLessons.id).notNull(),
+  isCompleted: boolean("is_completed").notNull().default(false),
+  completedAt: timestamp("completed_at"),
+  practiceScore: integer("practice_score"), // Score on practice battle (0-100)
+  attempts: integer("attempts").notNull().default(0),
+  lastAttemptAt: timestamp("last_attempt_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [
+  index("idx_user_training_user_id").on(table.userId),
+  index("idx_user_training_lesson_id").on(table.lessonId),
+]);
+
+export type TrainingLesson = typeof trainingLessons.$inferSelect;
+export type UserTrainingProgress = typeof userTrainingProgress.$inferSelect;
+
+// Platform wallet configuration
+export const platformWallets = pgTable("platform_wallets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  walletType: varchar("wallet_type").notNull().unique(), // rewards_pool, company_profit, revenue_share
+  walletAddress: varchar("wallet_address").notNull(),
+  balance: decimal("balance", { precision: 20, scale: 6 }).notNull().default("0.000000"),
+  minBalance: decimal("min_balance", { precision: 20, scale: 6 }).default("100.000000"), // Minimum balance alert threshold
+  description: text("description"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const walletTransactions = pgTable("wallet_transactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  walletId: varchar("wallet_id").references(() => platformWallets.id).notNull(),
+  txType: varchar("tx_type").notNull(), // deposit, withdrawal, reward_payout, profit_transfer
+  amount: decimal("amount", { precision: 20, scale: 6 }).notNull(),
+  balanceBefore: decimal("balance_before", { precision: 20, scale: 6 }).notNull(),
+  balanceAfter: decimal("balance_after", { precision: 20, scale: 6 }).notNull(),
+  txHash: varchar("tx_hash"), // Blockchain transaction hash
+  userId: varchar("user_id").references(() => users.id), // If related to a user
+  description: text("description"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [
+  index("idx_wallet_transactions_wallet_id").on(table.walletId),
+  index("idx_wallet_transactions_user_id").on(table.userId),
+  index("idx_wallet_transactions_type").on(table.txType),
+]);
+
+export type PlatformWallet = typeof platformWallets.$inferSelect;
+export type WalletTransaction = typeof walletTransactions.$inferSelect;
+
 // Arc Blockchain monetization configuration
 export const MONETIZATION_CONFIG = {
+  PLATFORM_WALLETS: {
+    REWARDS_POOL_MIN_BALANCE: "100.00", // Alert if rewards pool drops below $100
+    PROFIT_TRANSFER_THRESHOLD: "1000.00", // Auto-transfer profits when reaching $1000
+    COMPANY_WALLET_ADDRESS: process.env.COMPANY_WALLET_ADDRESS || "", // Set via environment variable
+  },
   ARC_REWARDS: {
     BATTLE_WIN_USDC: "0.10", // $0.10 USDC for winning a battle
     TOURNAMENT_1ST: "5.00", // $5.00 USDC for 1st place

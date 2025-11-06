@@ -12,6 +12,38 @@ This project is a real-time, voice-enabled rap battle application designed for i
 - Include user's Replit referral link for new users signing up to Replit
 
 ## Recent Changes (November 6, 2025)
+
+### 🎮 XP/Level Progression & Monetization System
+- **Level Progression**: 100-level system with exponential XP curve (1.4x multiplier)
+- **XP Sources**: Battle wins (100-500 XP), tournaments (1,000-5,000 XP), daily challenges (200 XP), login streaks (50 XP), win streaks (+10% bonus)
+- **Reward System**: Cosmetic unlocks, titles, badges, virtual currency rewards at milestone levels
+- **Battle Pass**: Seasonal progression with free and premium ($9.99) tiers, 50 rewards per season
+- **Cosmetic Shop**: Character skins, emotes, mic effects, victory animations, stage backgrounds (common, rare, epic, legendary rarities)
+- **Daily Challenges**: Rotating challenges for bonus XP and currency (win battles, play battles, win streaks)
+- **Virtual Currency**: Earned through gameplay, tracked with full transaction history
+- **User Inventory**: Track owned and equipped cosmetic items
+- **Database Tables**: user_progress, cosmetic_items, user_inventory, battle_passes, battle_pass_tiers, user_battle_pass, daily_challenges, user_challenge_progress, currency_transactions
+
+### 🎤 Rap Training Program
+- **Progressive Lessons**: Structured curriculum from beginner to expert (basics, rhyme schemes, flow, wordplay, battle tactics, advanced)
+- **Interactive Content**: Video tutorials, written lessons (markdown), practice prompts
+- **Skill Practice**: Practice battles with scoring to test learned techniques
+- **XP Rewards**: Earn 100 XP + 50 currency per completed lesson
+- **Level-Gated Content**: Advanced lessons unlock at higher levels
+- **Premium Lessons**: Exclusive content for subscribers
+- **Progress Tracking**: Track completion, scores, attempts per lesson
+- **Database Tables**: training_lessons, user_training_progress
+
+### 💰 Platform Wallet Management System
+- **Rewards Pool Wallet**: Holds USDC for paying out battle/tournament rewards
+- **Company Profit Wallet**: Separate wallet for collecting platform profits (tournament fees, battle pass sales)
+- **Balance Monitoring**: Alert when rewards pool drops below minimum threshold ($100 default)
+- **Auto-Transfer**: Automatically transfers profits to company wallet when threshold reached ($1,000 default)
+- **Transaction Tracking**: Complete audit trail of all wallet movements (deposits, withdrawals, reward payouts, profit transfers)
+- **Multi-Wallet Support**: Rewards pool, company profit, revenue share wallets
+- **Balance Alerts**: Low balance notifications to ensure sufficient funds for rewards
+- **Database Tables**: platform_wallets, wallet_transactions
+
 ### 🔐 Email/Password Authentication System
 - **Local Authentication**: Added email/password registration and login system with bcrypt password hashing
 - **Dual Auth Support**: Maintains both Replit OAuth (default on Replit) and local email/password authentication
