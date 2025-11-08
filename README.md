@@ -8,7 +8,7 @@
 
 The world's first voice-controlled blockchain gaming experience. Speak naturally to control USDC, battle AI opponents, and compete in tournaments on Circle's Arc L1.
 
-**🎮 Live Demo:** https://rapbotsarc.replit.app/
+**🎮 Live Demo:** (https://rapbotsonline.replit.app/)
 
 ---
 
@@ -499,4 +499,4 @@ If you find this project interesting, please consider giving it a star! ⭐
 
 🎤 Speak. Battle. Win. Earn. 🏆
 
-**Try it now:** https://rapbotsarc.replit.app/
+**Try it now:**  (https://rapbotsonline.replit.app/)
